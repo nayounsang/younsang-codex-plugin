@@ -10,6 +10,9 @@ passes.
 Install into the application under test, not into the API Scenario Forge
 plugin repository. Preserve the detected package manager and lockfile.
 
+If `msw` is absent from the target project's dependency manifest, include it
+in the installation.
+
 Browser runtime:
 
 ```bash
@@ -22,9 +25,26 @@ Node runtime:
 pnpm add -D --save-exact @msw-dev-tool/core @msw-dev-tool/node-cli msw
 ```
 
+If `msw` is already present, omit it from both commands. Preserve its existing
+version and dependency section; do not replace it with an unversioned or
+`--save-exact` installation.
+
+Browser runtime:
+
+```bash
+pnpm add -D --save-exact @msw-dev-tool/core @msw-dev-tool/browser-cli
+```
+
+Node runtime:
+
+```bash
+pnpm add -D --save-exact @msw-dev-tool/core @msw-dev-tool/node-cli
+```
+
 Translate the command to npm, Yarn, or Bun when appropriate. Install
 `@msw-dev-tool/react` only when the user explicitly wants the human-facing
-browser UI.
+browser UI. Do not change the existing `msw` version or move it between
+`dependencies` and `devDependencies`.
 
 ## Integrate an existing handler set
 

@@ -74,13 +74,14 @@ Start the application, then discover the tab running
 
 ```bash
 pnpm exec msw-dev-tool-browser tabs --cdp-url http://127.0.0.1:9222
+target_id="<paste-the-id-of-the-tab-that-runs-setupDevToolWorker>"
+cdp_args=(--cdp-url http://127.0.0.1:9222 --target "$target_id")
 pnpm exec msw-dev-tool-browser session \
-  --cdp-url http://127.0.0.1:9222 \
-  --target "$target_id"
+  "${cdp_args[@]}"
 ```
 
-Use the exact target ID for every subsequent browser CLI command. Browser
-scenario state is tab-scoped.
+Keep `cdp_args` in the same shell session and use it for every subsequent
+browser CLI command. Browser scenario state is tab-scoped.
 
 Use the configured `chrome-devtools` MCP to navigate, click, fill, inspect
 snapshots, read console output, inspect network activity, and take screenshots.
@@ -114,7 +115,7 @@ command or JSON shape. The linked Browser CLI and Node CLI pages are the
 source of truth; the examples below only show the workflow order.
 
 ```bash
-pnpm exec msw-dev-tool-browser list <cdp-args>
+pnpm exec msw-dev-tool-browser list "${cdp_args[@]}"
 pnpm exec msw-dev-tool --pid <pid> list
 ```
 
@@ -133,12 +134,12 @@ Example custom response:
 pnpm exec msw-dev-tool-browser set-custom-response \
   '{"path":"/api/items","method":"get"}' \
   --json '{"status":"200","contentType":"application/json","response":"[]","delay":100}' \
-  <cdp-args>
+  "${cdp_args[@]}"
 
 pnpm exec msw-dev-tool-browser set-behavior \
   '{"path":"/api/items","method":"get"}' \
   'custom response' \
-  <cdp-args>
+  "${cdp_args[@]}"
 ```
 
 For malformed or defensive-programming cases, use a custom response string
@@ -187,7 +188,7 @@ separate tab/process and a separate app port when necessary.
 Browser:
 
 ```bash
-pnpm exec msw-dev-tool-browser reset <cdp-args>
+pnpm exec msw-dev-tool-browser reset "${cdp_args[@]}"
 ```
 
 Node:
