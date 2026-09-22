@@ -17,13 +17,22 @@ Use this skill for a full documentation audit or for reviewing a documentation c
 ## Review workflow
 
 1. Identify the requested scope, audience, and mode. In a full audit, inventory the relevant documentation. In a change review, start with the diff and surrounding pages, then inspect only related duplicated claims and links. Read applicable `AGENTS.md` files before interpreting project commands or runtime procedures.
-2. Read [project-context.md](references/project-context.md) and build a repository-specific context dossier. Map documentation to its likely canonical source, implementation surfaces, public contracts, generated artifacts, vocabulary, and user journeys. Re-check facts when the branch or requested scope changes; the dossier is a routing aid, not a substitute for source verification.
-3. Build a claim/evidence matrix. For every API, import, type, schema, CLI command, UI label, configuration field, default, support claim, example, and project-specific term, verify in this order: public exports and types; implementation and schemas; CLI/UI/routes/configuration; focused tests; then official ecosystem documentation. Search the repository broadly before calling a term unsupported.
-4. Trace the first-success journey end to end: prerequisites, installation or setup, working directory and environment, command or code, expected result, common failure, recovery/reset, cleanup, and next step. Compare repeated examples across canonical docs, READMEs, tutorials, reference pages, and generated copies.
-5. Evaluate technical correctness and task completion before prose or formatting. Check examples as executable contracts where possible, including imports, versions, flags, JSON shape, defaults, identifiers, permissions, and lifecycle behavior.
-6. Apply the criteria in [rubric.md](references/rubric.md). Recommend a list, table, tab, callout, or separate section only when it materially improves scanning for the stated audience.
-7. Run proportionate, read-only verification where possible. Prefer existing documentation builds, link checks, type checks, lint, focused tests, or safe dry runs. Record exact commands and outcomes. Never treat a successful build as proof that prose or runtime behavior is correct. Do not perform live mutations unless the user explicitly requests runtime evidence and repository instructions define a safe isolated procedure.
-8. Produce the required report. Keep findings evidence-backed, severity-calibrated, and actionable. Include limitations when a claim could not be exercised or relevant runtime/generated state was unavailable.
+2. Read [project-context.md](references/project-context.md) and build one repository-specific context dossier. Map documentation to its likely canonical source, implementation surfaces, public contracts, generated artifacts, vocabulary, and user journeys. Re-check facts when the branch or requested scope changes; the dossier is a routing aid, not a substitute for source verification.
+3. Build one shared claim/evidence matrix and review manifest. For every API, import, type, schema, CLI command, UI label, configuration field, default, support claim, example, and project-specific term, record the relevant document location, source evidence, status, and verification gap. Search the repository broadly before calling a term unsupported.
+4. Trace the first-success journey before specialist review: prerequisites, installation or setup, working directory and environment, command or code, expected result, common failure, recovery/reset, cleanup, and next step. Compare repeated examples across canonical docs, READMEs, tutorials, reference pages, and generated copies.
+5. Dispatch the core documentation reviewers in parallel using the shared manifest and scoped context packets:
+   - **Technical accuracy and public contract:** imports, exports, types, schemas, commands, flags, configuration, defaults, permissions, lifecycle, and stated limitations.
+   - **Executability and task completion:** setup-to-first-success flow, expected output, failure recovery, reset, cleanup, and next step.
+   - **Information architecture and discoverability:** document purpose, headings, navigation, links, canonical ownership, and competing versions.
+   - **Terminology, clarity, and readability:** project vocabulary, ecosystem terms, casing, definitions, ambiguity, sentence structure, headings, code examples, tables, and reader comprehension.
+   - **Consistency, drift, and freshness:** duplicated claims, version support, deprecated interfaces, generated copies, and branch or release state.
+6. Dispatch conditional reviewers in parallel when the manifest detects the relevant scope:
+   - **Safety and operations:** remote debugging, destructive commands, unbounded repetition, external calls, credentials, production data, or other mutating procedures.
+   - **Accessibility:** UI or image-based instructions, headings, link text, alt text, tables, code examples, or information conveyed only visually.
+   - **Ecosystem and external references:** new or relied-on framework, library, API, protocol, standard, peer dependency, adapter, or official integration claim.
+7. Each reviewer returns structured candidates with the document location, claim, evidence, user impact, recommended structure or replacement wording, severity when applicable, and confidence. Reviewers may report an empty result. They do not edit files, run live mutations, or perform final synthesis.
+8. Independently verify candidates in parallel against the shared source packet. Confirm the cited location, evidence, affected user task, change relationship, and severity. Remove unsupported candidates and keep unverified but concrete limits separate from confirmed findings.
+9. Perform one final synthesis in the main review context. Apply [rubric.md](references/rubric.md) after checking the documented claims against the project-context dossier. Report only rubric dimensions supported by evidence and a user consequence. Deduplicate by root cause, preserve unique evidence-backed findings, list selected and skipped perspectives with reasons, and produce the required report. If sub-agent delegation is unavailable, perform the same perspective passes separately in one session and do not claim that they ran in parallel.
 
 ## Evidence and severity
 
@@ -43,14 +52,15 @@ Use the smallest severity supported by evidence. Do not elevate a wording prefer
 Return these sections in order:
 
 1. **Audit scope and verification** — audience, full/change mode, source paths, commands/tests/builds run, and runtime checks (if any).
-2. **Findings by severity** — highest severity first. Each finding includes:
+2. **Review perspectives** — perspectives selected, whether each ran in parallel or as a fallback sequential pass, and conditional perspectives skipped with their reasons.
+3. **Findings by severity** — highest severity first. Each finding includes:
    - **Location:** path and heading, command, or smallest useful line range.
    - **Problem:** one precise statement.
    - **Evidence:** implementation, type, schema, test, official usage, or execution result with an exact reference.
    - **User impact:** what the reader cannot do, may misunderstand, or may put at risk.
    - **Recommended structure and replacement wording:** the smallest actionable change; preserve verified names and syntax. If structure is sound, give only replacement wording.
-3. **Missing user tasks** — tasks the target reader needs but cannot complete from the reviewed docs.
-4. **Unverified or remaining limits** — claims not exercised, inaccessible runtime state, generated output not available, or external sources not checked, with the reason.
+4. **Missing user tasks** — tasks the target reader needs but cannot complete from the reviewed docs.
+5. **Unverified or remaining limits** — claims not exercised, inaccessible runtime state, generated output not available, or external sources not checked, with the reason.
 
 If no evidence-backed issue remains, write `No findings` and still state residual verification limits.
 
