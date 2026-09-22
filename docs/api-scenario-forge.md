@@ -4,7 +4,7 @@
 
 `api-scenario-forge`는 MSW와 [`@msw-dev-tool`](https://msw-dev-tool-docs.vercel.app/)을 이용해 실행 중인 애플리케이션의 API 응답 시나리오를 조정하고, 그 결과를 애플리케이션에서 직접 검증하는 스킬입니다.
 
-api 응답이 미구현된 상태거나 어렵거고 재현하기 힘든 조건도 실행 중에 만들 수 있습니다. 예를 들어 loading, error, empty, fallback, 비정상 응답을 실제 Browser나 Node 실행 경로에서 확인할 수 있습니다.
+API 응답이 미구현된 상태이거나 재현하기 힘든 조건도 실행 중에 만들 수 있습니다. 예를 들어 loading, error, empty, fallback, 비정상 응답을 실제 Browser나 Node 실행 경로에서 확인할 수 있습니다.
 
 ## 2. 적용 가능한 상황
 
@@ -43,7 +43,7 @@ Browser에서는 각 탭을 독립적인 scenario target으로 취급하고, Nod
 
 | 검증 대상 | API 시나리오 | 기대 결과 |
 |---|---|---|
-| 목록 loading | 지연 응답 | skeleton UI를 원할 때 까지 표시 |
+| 목록 loading | 지연 응답 | skeleton UI를 원할 때까지 표시 |
 | 특수한 상품이 있는 목록 데이터 | 제휴사 특가 할인 상품 포함 | 특수 케이스 처리 결과 확인 |
 | 상세 조회 실패 | `404` | not-found 화면과 재시도 버튼 |
 | 저장 실패 | `503` 또는 network error | optimistic update 롤백과 오류 메시지 |

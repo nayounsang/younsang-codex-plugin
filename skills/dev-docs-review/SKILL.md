@@ -32,7 +32,7 @@ Use this skill for a full documentation audit or for reviewing a documentation c
    - **Ecosystem and external references:** new or relied-on framework, library, API, protocol, standard, peer dependency, adapter, or official integration claim.
 7. Each reviewer returns structured candidates with the document location, claim, evidence, user impact, recommended structure or replacement wording, severity when applicable, and confidence. Reviewers may report an empty result. They do not edit files, run live mutations, or perform final synthesis.
 8. Independently verify candidates in parallel against the shared source packet. Confirm the cited location, evidence, affected user task, change relationship, and severity. Remove unsupported candidates and keep unverified but concrete limits separate from confirmed findings.
-9. Perform one final synthesis in the main review context. Deduplicate by root cause, preserve unique evidence-backed findings, list selected and skipped perspectives with reasons, and produce the required report. If sub-agent delegation is unavailable, perform the same perspective passes separately in one session and do not claim that they ran in parallel.
+9. Perform one final synthesis in the main review context. Apply [rubric.md](references/rubric.md) after checking the documented claims against the project-context dossier. Report only rubric dimensions supported by evidence and a user consequence. Deduplicate by root cause, preserve unique evidence-backed findings, list selected and skipped perspectives with reasons, and produce the required report. If sub-agent delegation is unavailable, perform the same perspective passes separately in one session and do not claim that they ran in parallel.
 
 ## Evidence and severity
 
@@ -59,8 +59,8 @@ Return these sections in order:
    - **Evidence:** implementation, type, schema, test, official usage, or execution result with an exact reference.
    - **User impact:** what the reader cannot do, may misunderstand, or may put at risk.
    - **Recommended structure and replacement wording:** the smallest actionable change; preserve verified names and syntax. If structure is sound, give only replacement wording.
-3. **Missing user tasks** — tasks the target reader needs but cannot complete from the reviewed docs.
-4. **Unverified or remaining limits** — claims not exercised, inaccessible runtime state, generated output not available, or external sources not checked, with the reason.
+4. **Missing user tasks** — tasks the target reader needs but cannot complete from the reviewed docs.
+5. **Unverified or remaining limits** — claims not exercised, inaccessible runtime state, generated output not available, or external sources not checked, with the reason.
 
 If no evidence-backed issue remains, write `No findings` and still state residual verification limits.
 
