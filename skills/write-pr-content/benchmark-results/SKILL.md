@@ -32,7 +32,7 @@ tools that are not installed or involved.
 | --- | --- | --- |
 | OS and architecture | `uname -srmo` or the repository's platform command | OS, kernel, architecture |
 | Node.js | `node --version` | Exact runtime version |
-| npm environment | `npm env` | Sanitized environment artifact path and relevant non-secret settings |
+| npm environment | `npm exec --yes envinfo -- --system --binaries --npmPackages <relevant packages>` or the repository-local environment collector | Sanitized environment artifact path and relevant non-secret settings |
 | npm diagnostics | `npm doctor` | Sanitized diagnostic artifact path and pass/fail summary |
 | Package manager | Detected manager's version command, such as `npm --version`, `pnpm --version`, `yarn --version`, or `bun --version` | Exact package-manager version |
 | Benchmark runner | The configured runner's version command, such as the repository's `vitest`, `jest`, or custom benchmark command | Exact runner/tool version |
@@ -40,7 +40,7 @@ tools that are not installed or involved.
 | Browser automation/driver | The configured Browser CLI, CDP client, or driver version command | Exact tool version when it affects the run |
 
 Save raw command output outside the PR body, redact tokens, credentials,
-private URLs, and unrelated environment values from `npm env` and diagnostics,
+private URLs, and unrelated environment values from `envinfo` and diagnostics,
 and print the sanitized artifact paths in the benchmark evidence. If a listed
 tool is not part of the benchmark, mark it as not applicable instead of
 inventing a version. A missing required environment value means the fragment
@@ -65,5 +65,5 @@ actual artifact paths):
 
 | Environment evidence | Artifact path |
 | --- | --- |
-| Sanitized `npm env` and `npm doctor` output | `<repo-relative environment artifact path>` |
+| Sanitized `envinfo` and `npm doctor` output | `<repo-relative environment artifact path>` |
 ```

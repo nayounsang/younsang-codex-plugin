@@ -8,8 +8,8 @@
 | [`functional-change-spec`](../skills/write-pr-content/functional-change-spec/SKILL.md) | 테스트와 diff에서 observable behavior를 추출할 수 있을 때 | Spec fragment | - |
 | [`change-diagram`](../skills/write-pr-content/change-diagram/SKILL.md) | 명시적 대상 또는 시각화할 외부 동작이 있을 때 | 새 기능은 After 1개, 기능 변경·버그 수정은 Before/After 2개 다이어그램 | Mermaid fenced block으로 반환하며 내부 helper 호출은 표시하지 않습니다. |
 | [`reference-links`](../skills/write-pr-content/reference-links/SKILL.md) | PR에 직접 링크된 이슈 외에 작업 중 참고한 외부 자료가 있을 때 | 근거가 드러나는 링크 목록 | - |
-| [`benchmark-results`](../skills/write-pr-content/benchmark-results/SKILL.md) | 성능 변경 의도와 benchmark 입력이 있을 때 | 환경·workload·baseline·after·delta 표 | Node/npm과 benchmark runner를 수집하고, 브라우저 또는 Browser CLI를 사용하면 해당 버전도 기록합니다. `npm env`와 `npm doctor`는 민감정보를 제거한 artifact 경로로 남깁니다. |
-| [`visual-evidence`](../skills/write-pr-content/visual-evidence/SKILL.md) | UI 변경작업이고 격리 브라우저에서 실제 캡처가 가능할 때 | After 또는 Before/After 캡처 | 격리된 Computer Use, 저장소의 Chrome DevTools MCP, Browser CLI 역할을 구분하고, 실제 캡처가 생성된 경우에만 정확한 artifact 경로를 포함합니다. |
+| [`benchmark-results`](../skills/write-pr-content/benchmark-results/SKILL.md) | 성능 변경 의도와 benchmark 입력이 있을 때 | 환경·workload·baseline·after·delta 표 | Node/npm과 benchmark runner를 수집하고, 브라우저 또는 Browser CLI를 사용하면 해당 버전도 기록합니다. `envinfo`와 `npm doctor`는 민감정보를 제거한 artifact 경로로 남깁니다. |
+| [`visual-evidence`](../skills/write-pr-content/visual-evidence/SKILL.md) | UI 변경작업이고 격리 브라우저에서 실제 캡처가 가능할 때 | After 또는 Before/After 캡처 | 격리된 Computer Use, 저장소의 Chrome DevTools MCP, Browser CLI 역할을 구분합니다. Before는 사용자 제공 artifact, clean worktree checkout, 임시 worktree 순으로 시도하고 모두 실패하면 `None`을 반환합니다. 캡처 artifact는 정확한 로컬 경로만 사용합니다. |
 | [`bug-reproduction`](../skills/write-pr-content/bug-reproduction/SKILL.md) | 버그 재현 정보가 부족하지만 테스트·명령·diff에서 복원할 근거가 있을 때 | 재현 절차 fragment | - |
 
 각 스킬은 저장소의 PR 템플릿을 먼저 읽고 해당 heading과 placeholder를
@@ -44,7 +44,7 @@
 
 | Environment evidence | Artifact path |
 | --- | --- |
-| `npm env`, `npm doctor`, `envinfo` 결과를 민감정보 제거 후 저장 | `artifacts/benchmarks/airi-2611/environment.txt` |
+| `envinfo`, `npm doctor` 결과를 민감정보 제거 후 저장 | `artifacts/benchmarks/airi-2611/environment.txt` |
 
 ### [#2474 `fix(stage-tamagotchi): prevent controls island overflow in small windows with scroll`](https://github.com/moeru-ai/airi/pull/2474)
 
@@ -85,7 +85,12 @@ flowchart LR
 
 | State | Tool and target | Evidence | Artifact path or URL |
 | --- | --- | --- | --- |
-| Narrow & small | Provided capture URL | [Provided video](https://github.com/user-attachments/assets/1a44ff4f-8fe2-4a05-96a8-59ebf7dafcff) | `https://github.com/user-attachments/assets/1a44ff4f-8fe2-4a05-96a8-59ebf7dafcff` |
-| Somewhat generous size | Provided capture URL | [Provided video](https://github.com/user-attachments/assets/c73dbee4-8c8f-4937-ae1a-eda00178274c) | `https://github.com/user-attachments/assets/c73dbee4-8c8f-4937-ae1a-eda00178274c` |
+| Narrow & small | Provided capture URL | - | - |
+| Somewhat generous size | Provided capture URL | - | - |
+
+| Optional user-provided video | Link |
+| --- | --- |
+| Narrow & small | [Provided video](https://github.com/user-attachments/assets/1a44ff4f-8fe2-4a05-96a8-59ebf7dafcff) |
+| Somewhat generous size | [Provided video](https://github.com/user-attachments/assets/c73dbee4-8c8f-4937-ae1a-eda00178274c) |
 
 `bug-reproduction`: `None`
