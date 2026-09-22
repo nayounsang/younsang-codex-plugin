@@ -1,0 +1,18 @@
+{
+  "name": "younsang-codex-plugin",
+  "version": "0.1.0",
+  "description": "A curated bundle of super useful Codex skills. when working in software engineering",
+  "author": {
+    "name": "Younsang"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Younsang Codex Skills",
+    "shortDescription": "super useful skills for Codex.",
+    "longDescription": "A modular local plugin that groups independent Codex skills under one installable bundle. Each skill lives in its own directory with its own references and optional agent metadata.",
+    "developerName": "Younsang",
+    "category": "Developer Tools",
+    "capabilities": ["Review", "Read-only analysis"],
+    "defaultPrompt": "Use the appropriate skill for this task."
+  }
+}

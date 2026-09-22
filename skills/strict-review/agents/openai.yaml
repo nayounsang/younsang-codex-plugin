@@ -1,0 +1,6 @@
+interface:
+  display_name: "Strict Review"
+  short_description: "Review code changes for defects and ecosystem gaps"
+  default_prompt: "Use $strict-review to inspect the requested code changes for concrete defects, structural and semantic risks, dependency reuse candidates, and ecosystem adoption gaps."
+policy:
+  allow_implicit_invocation: false
