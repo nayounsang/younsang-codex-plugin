@@ -1,0 +1,4 @@
+interface:
+  display_name: "Developer Docs Review"
+  short_description: "Audit developer docs against the codebase"
+  default_prompt: "Use $dev-docs-review to audit the requested developer documentation without editing it."
