@@ -1,5 +1,5 @@
 {
-  "description": "Opt-in local prompt queue for the angry-insight skill.",
+  "description": "Trusting UserPromptSubmit starts local capture of submitted prompts for Angry Insight.",
   "hooks": {
     "SessionStart": [
       {

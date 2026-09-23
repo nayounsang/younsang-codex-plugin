@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Local, opt-in prompt queue used by the angry-insight plugin skill."""
+"""Project-partitioned local prompt queue for the trusted angry-insight hook."""
 
 from __future__ import annotations
 
 import argparse
 import datetime as dt
+import hashlib
 import json
 import os
 import re
@@ -86,10 +87,6 @@ def atomic_json(path: Path, value: dict[str, Any]) -> None:
         raise
 
 
-def settings() -> dict[str, Any] | None:
-    return read_json(data_root() / "settings.json")
-
-
 def expire_pending(root: Path) -> int:
     """Delete expired pending records and abandoned atomic-write temp files."""
     pending = root / "pending"
@@ -97,7 +94,7 @@ def expire_pending(root: Path) -> int:
         return 0
     cutoff = now() - RETENTION
     removed = 0
-    for path in pending.iterdir():
+    for path in pending.rglob("*"):
         if not path.is_file():
             continue
         record = read_json(path) if path.suffix == ".json" else None
@@ -116,30 +113,42 @@ def expire_pending(root: Path) -> int:
     return removed
 
 
-def current_scope_root(config: dict[str, Any], cwd: str | None = None) -> str:
-    if config.get("scope") == "global":
-        return "*"
-    return str(config.get("project_root") or project_root(cwd))
+def project_bucket(project: str) -> str:
+    return hashlib.sha256(project.encode("utf-8")).hexdigest()
 
 
-def eligible(config: dict[str, Any] | None, cwd: str | None = None) -> bool:
-    if not config or config.get("enabled") is not True:
-        return False
-    if config.get("scope") == "global":
-        return True
-    return config.get("scope") == "project" and config.get("project_root") == project_root(cwd)
+def project_pending_dir(root: Path, project: str) -> Path:
+    return root / "pending" / project_bucket(project)
 
 
-def require_record_access(config: dict[str, Any] | None, record: dict[str, Any] | None = None) -> None:
-    if not eligible(config):
-        raise RuntimeError("Angry Insight is disabled or this event is outside the active scope.")
-    if (
-        record is not None
-        and config is not None
-        and config.get("scope") == "project"
-        and record.get("project_root") != config.get("project_root")
-    ):
-        raise RuntimeError("Angry Insight is disabled or this event is outside the active scope.")
+def migrate_legacy_pending(root: Path) -> int:
+    """Move old flat queue files into project-specific directories."""
+    pending = root / "pending"
+    if not pending.exists():
+        return 0
+    moved = 0
+    for path in pending.iterdir():
+        if not path.is_file() or path.suffix != ".json":
+            continue
+        record = read_json(path)
+        project = record.get("project_root") if record else None
+        if not isinstance(project, str) or not project:
+            continue
+        destination_dir = project_pending_dir(root, project)
+        destination_dir.mkdir(parents=True, exist_ok=True)
+        destination = destination_dir / path.name
+        try:
+            if not destination.exists():
+                path.replace(destination)
+                moved += 1
+        except OSError:
+            continue
+    return moved
+
+
+def require_current_project(record: dict[str, Any], project: str) -> None:
+    if record.get("project_root") != project:
+        raise RuntimeError("Pending event not found in the current project.")
 
 
 def validate_event_id(event_id: str) -> None:
@@ -150,8 +159,7 @@ def validate_event_id(event_id: str) -> None:
 def capture() -> None:
     try:
         event = json.load(sys.stdin)
-        config = settings()
-        if not isinstance(event, dict) or not eligible(config, event.get("cwd")):
+        if not isinstance(event, dict):
             return
         prompt = event.get("prompt")
         session_id = event.get("session_id")
@@ -162,14 +170,15 @@ def capture() -> None:
             return
 
         root = data_root()
-        pending_dir = root / "pending"
+        current_project = project_root(event.get("cwd"))
+        pending_dir = project_pending_dir(root, current_project)
         cases_dir = root / "cases"
         pending_dir.mkdir(parents=True, exist_ok=True)
 
         event_id = secrets.token_hex(16)
         record = {
             "event_id": event_id,
-            "project_root": project_root(event.get("cwd")),
+            "project_root": current_project,
             "session_id": session_id,
             "turn_id": turn_id,
             "captured_at": timestamp(),
@@ -241,14 +250,13 @@ def transcript_messages(path: Path) -> list[tuple[str, str, str | None]]:
 
 def inspect(event_id: str) -> None:
     validate_event_id(event_id)
-    config = settings()
-    require_record_access(config)
     root = data_root()
-    record_path = root / "pending" / f"{event_id}.json"
+    current_project = project_root()
+    record_path = project_pending_dir(root, current_project) / f"{event_id}.json"
     record = read_json(record_path)
     if not record or record.get("event_id") != event_id:
         raise RuntimeError("Pending event not found or invalid.")
-    require_record_access(config, record)
+    require_current_project(record, current_project)
 
     transcript_path = record.get("transcript_path")
     messages = transcript_messages(Path(transcript_path)) if isinstance(transcript_path, str) else []
@@ -272,18 +280,16 @@ def inspect(event_id: str) -> None:
 
 def list_pending() -> None:
     root = data_root()
+    migrate_legacy_pending(root)
     expire_pending(root)
-    config = settings()
-    if not config or config.get("enabled") is not True:
-        print("[]")
-        return
-    scope = current_scope_root(config)
+    current_project = project_root()
+    pending_dir = project_pending_dir(root, current_project)
     eligible_records: list[tuple[str, Path, dict[str, Any]]] = []
-    for path in sorted((root / "pending").glob("*.json")) if (root / "pending").exists() else []:
+    for path in sorted(pending_dir.glob("*.json")) if pending_dir.exists() else []:
         item = read_json(path)
         if not item or not isinstance(item.get("event_id"), str):
             continue
-        if scope == "*" or item.get("project_root") == scope:
+        if item.get("project_root") == current_project:
             eligible_records.append((str(item.get("captured_at", "")), path, item))
 
     # Repeated hook deliveries are coalesced here, off the prompt-submit path.
@@ -308,14 +314,13 @@ def list_pending() -> None:
 
 def finish(args: argparse.Namespace) -> None:
     validate_event_id(args.event_id)
-    config = settings()
-    require_record_access(config)
     root = data_root()
-    pending_path = root / "pending" / f"{args.event_id}.json"
+    current_project = project_root()
+    pending_path = project_pending_dir(root, current_project) / f"{args.event_id}.json"
     record = read_json(pending_path)
     if not record or record.get("event_id") != args.event_id:
         raise RuntimeError("Pending event not found or invalid.")
-    require_record_access(config, record)
+    require_current_project(record, current_project)
     if args.classification == "complaint":
         result = json.load(sys.stdin)
         if not isinstance(result, dict):
@@ -343,31 +348,25 @@ def finish(args: argparse.Namespace) -> None:
     print(json.dumps({"event_id": args.event_id, "classification": args.classification, "saved": args.classification == "complaint"}))
 
 
-def configure(args: argparse.Namespace) -> None:
-    root = data_root()
-    value: dict[str, Any] = {"enabled": True, "scope": args.scope, "updated_at": timestamp()}
-    if args.scope == "project":
-        value["project_root"] = project_root()
-    atomic_json(root / "settings.json", value)
-    print(json.dumps({"enabled": True, "scope": args.scope, "project_root": value.get("project_root")}))
-
-
-def disable(_: argparse.Namespace) -> None:
-    config = settings() or {}
-    config.update({"enabled": False, "updated_at": timestamp()})
-    atomic_json(data_root() / "settings.json", config)
-    print('{"enabled": false}')
-
-
 def clear(_: argparse.Namespace) -> None:
     root = data_root()
     removed = 0
     for directory in (root / "pending", root / "cases"):
         if directory.exists():
-            for path in directory.iterdir():
+            for path in directory.rglob("*"):
                 if path.is_file():
                     path.unlink()
                     removed += 1
+            for path in sorted(directory.rglob("*"), reverse=True):
+                if path.is_dir():
+                    try:
+                        path.rmdir()
+                    except OSError:
+                        pass
+    settings_path = root / "settings.json"
+    if settings_path.exists():
+        settings_path.unlink()
+        removed += 1
     print(json.dumps({"deleted_files": removed}))
 
 
@@ -377,7 +376,9 @@ def expire(_: argparse.Namespace) -> None:
 
 
 def session_start(_: argparse.Namespace) -> None:
-    expire_pending(data_root())
+    root = data_root()
+    migrate_legacy_pending(root)
+    expire_pending(root)
     plugin_root = os.environ.get("PLUGIN_ROOT") or os.environ.get("CLAUDE_PLUGIN_ROOT")
     if not plugin_root:
         plugin_root = str(Path(__file__).resolve().parents[3])
@@ -405,9 +406,6 @@ def main() -> int:
     finish_parser = commands.add_parser("finish")
     finish_parser.add_argument("event_id")
     finish_parser.add_argument("classification", choices=("complaint", "not-complaint"))
-    config_parser = commands.add_parser("configure")
-    config_parser.add_argument("--scope", choices=("project", "global"), required=True)
-    commands.add_parser("disable")
     commands.add_parser("clear")
     commands.add_parser("expire")
     commands.add_parser("session-start")
@@ -426,10 +424,6 @@ def main() -> int:
             inspect(args.event_id)
         elif args.command == "finish":
             finish(args)
-        elif args.command == "configure":
-            configure(args)
-        elif args.command == "disable":
-            disable(args)
         elif args.command == "clear":
             clear(args)
         elif args.command == "expire":
