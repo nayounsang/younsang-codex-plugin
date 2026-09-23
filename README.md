@@ -51,3 +51,11 @@ Codex의 기존 빌트인 리뷰 스킬을 확장해 깊고 다양한 관점에�
 - 문서의 API, 명령, 설정, 사용자 여정, 링크와 생태계, 난잡한 표현을 점검합니다.
 - 실행 가능한 수정 방향을 출력합니다.
 - 자세한 것은 [`docs/dev-docs-review.md`](docs/dev-docs-review.md)를 참고하세요.
+
+### `write-pr-content`
+
+좋은 PR의 사례가 될 수 있는 Markdown fragment를 제공합니다.
+
+- 기능 변경 명세, 외부 동작 다이어그램, 참고 링크, benchmark, UI 캡처,
+  버그 재현 절차 중 필요한 것을 얻기 위한 독립적인 하위 스킬로 제공합니다.
+- 자세한 것은 [`docs/write-pr-content.md`](docs/write-pr-content.md)를 참고하세요.
