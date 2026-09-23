@@ -12,6 +12,17 @@
 | [`visual-evidence`](../skills/write-pr-content/visual-evidence/SKILL.md) | UI 변경작업이고 격리 브라우저에서 실제 캡처가 가능할 때 | After 또는 Before/After 캡처 | 격리된 Computer Use, 저장소의 Chrome DevTools MCP, Browser CLI 역할을 구분합니다. Before는 사용자 제공 artifact를 받을 수 있고 없다면 작업 이전 코드베이스에서 얻도록 합니다. |
 | [`bug-reproduction`](../skills/write-pr-content/bug-reproduction/SKILL.md) | 버그 재현 정보가 부족하지만 테스트·명령·diff에서 복원할 근거가 있을 때 | 재현 절차 fragment | - |
 
+## 사용 예시
+
+```text
+$functional-change-spec 사용자가 체감하는 동작 변경을 추려서 스펙 변경 사항을 작성해줘.
+
+$change-diagram 이 버그 수정 작업으로 인해 변경되는 GraphRenderer 객체 내부의 동작 변경을 시각화 해줘.
+
+$benchmark-results `.local/build-time-experiment`의 측정 로그를 바탕으로 PR에 넣을 표를 작성해줘.
+
+```
+
 각 스킬은 저장소의 PR 템플릿을 먼저 읽고 해당 heading과 placeholder를
 존중합니다. 따라서, PR 템플릿과 관계 없이 사용 가능합니다.
 
