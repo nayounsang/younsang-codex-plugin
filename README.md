@@ -12,7 +12,7 @@ nayounsang이 Codex CLI와 개발할 때 사용하는 유틸리티 모음입니�
 
 ```bash
 # 최초 1회: marketplace 등록
-codex plugin marketplace add nayunsang/younsang-codex-plugin --ref main
+codex plugin marketplace add nayounsang/younsang-codex-plugin --ref main
 
 # 플러그인 설치
 codex plugin add younsang-codex-plugin@younsang-codex-plugins
