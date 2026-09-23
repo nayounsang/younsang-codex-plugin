@@ -7,6 +7,7 @@ import argparse
 import datetime as dt
 import json
 import os
+import re
 import secrets
 import subprocess
 import sys
@@ -129,6 +130,23 @@ def eligible(config: dict[str, Any] | None, cwd: str | None = None) -> bool:
     return config.get("scope") == "project" and config.get("project_root") == project_root(cwd)
 
 
+def require_record_access(config: dict[str, Any] | None, record: dict[str, Any] | None = None) -> None:
+    if not eligible(config):
+        raise RuntimeError("Angry Insight is disabled or this event is outside the active scope.")
+    if (
+        record is not None
+        and config is not None
+        and config.get("scope") == "project"
+        and record.get("project_root") != config.get("project_root")
+    ):
+        raise RuntimeError("Angry Insight is disabled or this event is outside the active scope.")
+
+
+def validate_event_id(event_id: str) -> None:
+    if not re.fullmatch(r"[0-9a-f]{32}", event_id):
+        raise RuntimeError("Invalid event ID.")
+
+
 def capture() -> None:
     try:
         event = json.load(sys.stdin)
@@ -222,14 +240,15 @@ def transcript_messages(path: Path) -> list[tuple[str, str, str | None]]:
 
 
 def inspect(event_id: str) -> None:
+    validate_event_id(event_id)
+    config = settings()
+    require_record_access(config)
     root = data_root()
     record_path = root / "pending" / f"{event_id}.json"
     record = read_json(record_path)
     if not record or record.get("event_id") != event_id:
         raise RuntimeError("Pending event not found or invalid.")
-    config = settings()
-    if not eligible(config) and config and config.get("scope") == "project":
-        raise RuntimeError("This event is outside the enabled project scope.")
+    require_record_access(config, record)
 
     transcript_path = record.get("transcript_path")
     messages = transcript_messages(Path(transcript_path)) if isinstance(transcript_path, str) else []
@@ -288,11 +307,15 @@ def list_pending() -> None:
 
 
 def finish(args: argparse.Namespace) -> None:
+    validate_event_id(args.event_id)
+    config = settings()
+    require_record_access(config)
     root = data_root()
     pending_path = root / "pending" / f"{args.event_id}.json"
     record = read_json(pending_path)
     if not record or record.get("event_id") != args.event_id:
         raise RuntimeError("Pending event not found or invalid.")
+    require_record_access(config, record)
     if args.classification == "complaint":
         result = json.load(sys.stdin)
         if not isinstance(result, dict):

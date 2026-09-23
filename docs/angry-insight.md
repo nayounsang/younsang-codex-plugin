@@ -25,7 +25,9 @@ they do not assume hook-only environment variables are present in the shell.
 Project scope records prompts only from the configured Git root (or the
 configured directory when it is not a Git repository). Global scope records
 prompts from any project. The hook stores them under the plugin's writable
-`PLUGIN_DATA` directory.
+`PLUGIN_DATA` directory. The helper checks that collection is enabled before
+reading or finishing an event, and checks a project's event root in project
+scope.
 
 ## Analyze and retain data
 
