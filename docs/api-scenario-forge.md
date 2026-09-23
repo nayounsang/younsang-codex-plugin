@@ -24,13 +24,13 @@ $api-scenario-forge `/product/[id]` 페이지에서 사용하는 API에 대해 1
 
 ```mermaid
 flowchart TD
-    A[프로젝트와 MSW 설정 확인] --> B[Runtime detect]
-    B -->|준비됨| C[API 시나리오(응답) 설정]
-    B -->|준비되지 않음| D[Runtime init]
+    A["프로젝트와 MSW 설정 확인"] --> B["Runtime detect"]
+    B -->|준비됨| C["API 시나리오(응답) 설정"]
+    B -->|준비되지 않음| D["Runtime init"]
     D --> C
-    C --> E[애플리케이션 기능 실행]
-    E --> F[상태 확인]
-    F --> G[Reset 및 상태 확인]
+    C --> E["애플리케이션 기능 실행"]
+    E --> F["상태 확인"]
+    F --> G["Reset 및 상태 확인"]
 ```
 
 1. runtime이 준비되어 있으면 바로 API 시나리오 응답을 설정합니다.
