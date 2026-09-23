@@ -7,8 +7,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${PLUGIN_ROOT}/skills/angry-insight/scripts/queue.py\" expire",
-            "commandWindows": "py -3 \"${PLUGIN_ROOT}/skills/angry-insight/scripts/queue.py\" expire",
+            "command": "python3 \"${PLUGIN_ROOT}/skills/angry-insight/scripts/queue.py\" session-start",
+            "commandWindows": "py -3 \"${PLUGIN_ROOT}/skills/angry-insight/scripts/queue.py\" session-start",
             "timeout": 5
           }
         ]

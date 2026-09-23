@@ -144,15 +144,9 @@ def capture() -> None:
             return
 
         root = data_root()
-        expire_pending(root)
         pending_dir = root / "pending"
         cases_dir = root / "cases"
         pending_dir.mkdir(parents=True, exist_ok=True)
-        # A retry of the same hook invocation must not create another record.
-        for existing in pending_dir.glob("*.json"):
-            old = read_json(existing)
-            if old and old.get("session_id") == session_id and old.get("turn_id") == turn_id:
-                return
 
         event_id = secrets.token_hex(16)
         record = {
@@ -265,13 +259,31 @@ def list_pending() -> None:
         print("[]")
         return
     scope = current_scope_root(config)
-    records = []
+    eligible_records: list[tuple[str, Path, dict[str, Any]]] = []
     for path in sorted((root / "pending").glob("*.json")) if (root / "pending").exists() else []:
         item = read_json(path)
         if not item or not isinstance(item.get("event_id"), str):
             continue
         if scope == "*" or item.get("project_root") == scope:
-            records.append({"event_id": item["event_id"], "captured_at": item.get("captured_at"), "project_root": item.get("project_root")})
+            eligible_records.append((str(item.get("captured_at", "")), path, item))
+
+    # Repeated hook deliveries are coalesced here, off the prompt-submit path.
+    seen_turns: set[tuple[str, str, str]] = set()
+    records = []
+    for _, path, item in sorted(eligible_records, key=lambda entry: entry[0]):
+        session_id = item.get("session_id")
+        turn_id = item.get("turn_id")
+        project = item.get("project_root")
+        if isinstance(session_id, str) and isinstance(turn_id, str) and isinstance(project, str):
+            key = (project, session_id, turn_id)
+            if key in seen_turns:
+                try:
+                    path.unlink()
+                except OSError:
+                    continue
+                continue
+            seen_turns.add(key)
+        records.append({"event_id": item["event_id"], "captured_at": item.get("captured_at"), "project_root": project})
     print(json.dumps(records, ensure_ascii=False))
 
 
@@ -341,8 +353,27 @@ def expire(_: argparse.Namespace) -> None:
     print(json.dumps({"expired_files": removed}))
 
 
+def session_start(_: argparse.Namespace) -> None:
+    expire_pending(data_root())
+    plugin_root = os.environ.get("PLUGIN_ROOT") or os.environ.get("CLAUDE_PLUGIN_ROOT")
+    if not plugin_root:
+        plugin_root = str(Path(__file__).resolve().parents[3])
+    helper = Path(plugin_root) / "skills" / "angry-insight" / "scripts" / "queue.py"
+    context = (
+        "Angry Insight helper path: " + str(helper) + "\n"
+        "Angry Insight data directory: " + str(data_root().resolve())
+    )
+    print(json.dumps({
+        "hookSpecificOutput": {
+            "hookEventName": "SessionStart",
+            "additionalContext": context,
+        }
+    }, ensure_ascii=False))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--data-dir", help="PLUGIN_DATA directory supplied by the SessionStart hook.")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("capture")
     commands.add_parser("list")
@@ -356,8 +387,14 @@ def main() -> int:
     commands.add_parser("disable")
     commands.add_parser("clear")
     commands.add_parser("expire")
+    commands.add_parser("session-start")
     args = parser.parse_args()
     try:
+        if args.data_dir:
+            data_dir = Path(args.data_dir).expanduser()
+            if not data_dir.is_absolute():
+                raise RuntimeError("--data-dir must be an absolute path.")
+            os.environ["PLUGIN_DATA"] = str(data_dir)
         if args.command == "capture":
             capture()
         elif args.command == "list":
@@ -374,6 +411,8 @@ def main() -> int:
             clear(args)
         elif args.command == "expire":
             expire(args)
+        elif args.command == "session-start":
+            session_start(args)
         return 0
     except Exception as exc:
         print(f"angry-insight: {exc}", file=sys.stderr)

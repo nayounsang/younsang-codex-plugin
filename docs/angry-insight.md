@@ -18,6 +18,10 @@ Then inspect and trust the plugin's `UserPromptSubmit` hook in Codex's `/hooks`
 screen. The hook stores prompts only after both the scope setting is enabled and
 the hook is trusted. It makes no model or network calls.
 
+The `SessionStart` hook provides the helper path and writable data directory to
+the skill's context. Skill commands pass that data directory with `--data-dir`;
+they do not assume hook-only environment variables are present in the shell.
+
 Project scope records prompts only from the configured Git root (or the
 configured directory when it is not a Git repository). Global scope records
 prompts from any project. The hook stores them under the plugin's writable
@@ -33,8 +37,8 @@ Search queries use only an anonymized complaint summary. Prompt and transcript
 text are not sent to those search sources.
 
 Pending prompt text and transcript paths remain local for up to 30 days of
-active Codex use. The hook deletes expired entries on session start, prompt
-submission, and analysis; expired entries are never analyzed. With no Codex
+active Codex use. The hook deletes expired entries on session start and
+analysis; expired entries are never analyzed. With no Codex
 process running, a local hook cannot execute at the exact expiration time.
 After successful analysis,
 non-complaint entries are deleted. For a complaint, the helper atomically saves
@@ -43,6 +47,10 @@ deleting the raw prompt and transcript path. Transcript files themselves are
 never deleted. A failed analysis leaves the pending entry available for retry
 until it expires. Saved complaint reports remain in `PLUGIN_DATA/cases/` until
 you clear them or remove the plugin data directory.
+
+Prompt submission writes one event file without scanning the queue. Expiration
+and duplicate session/turn coalescing happen at session start or when the skill
+lists pending events.
 
 If the transcript cannot be parsed or the preceding response is unavailable,
 the skill reports that limitation and avoids guessing. Transcript formats are
