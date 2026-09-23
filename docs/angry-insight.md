@@ -1,77 +1,40 @@
 # Angry Insight
 
-`$angry-insight` reviews prompts that you explicitly opt in to store locally. It
-looks for follow-up messages that express dissatisfaction with the immediately
-preceding Codex response, then suggests ways to avoid the observed mistake.
+`$angry-insight`는 사용자가 명시적으로 허용해 로컬에 저장한 프롬프트를 검토합니다. 직전 Codex 응답에 불만을 나타내는 후속 메시지를 찾아, 같은 실수를 줄일 방법을 제안합니다.
 
-## Opt in and trust the hook
+## 수집 허용 및 훅 신뢰
 
-Collection is off by default. Ask Codex to enable Angry Insight for the current
-project or globally, for example:
+수집은 기본적으로 꺼져 있습니다. 예를 들어 현재 프로젝트 또는 전역 범위에서 수집을 켜도록 요청할 수 있습니다.
 
 ```text
 $angry-insight 이 프로젝트에서 수집을 켜줘
 $angry-insight 전역으로 수집을 켜줘
 ```
 
-Then inspect and trust the plugin's `UserPromptSubmit` hook in Codex's `/hooks`
-screen. The hook stores prompts only after both the scope setting is enabled and
-the hook is trusted. It makes no model or network calls.
+그런 다음 Codex의 `/hooks` 화면에서 플러그인의 `UserPromptSubmit` 훅을 확인하고 신뢰합니다. 범위 설정에서 수집을 켜고 훅을 신뢰한 뒤에만 프롬프트를 저장합니다. 훅은 모델을 호출하거나 네트워크에 연결하지 않습니다.
 
-The `SessionStart` hook provides the helper path and writable data directory to
-the skill's context. Skill commands pass that data directory with `--data-dir`;
-they do not assume hook-only environment variables are present in the shell.
+`SessionStart` 훅은 헬퍼의 절대 경로와 쓰기 가능한 데이터 디렉터리를 스킬 문맥에 전달합니다. 스킬 명령은 `--data-dir`에 이 디렉터리를 전달하므로, 훅에서만 제공되는 환경 변수가 일반 셸에도 있다고 가정하지 않습니다.
 
-Project scope records prompts only from the configured Git root (or the
-configured directory when it is not a Git repository). Global scope records
-prompts from any project. The hook stores them under the plugin's writable
-`PLUGIN_DATA` directory. The helper checks that collection is enabled before
-reading or finishing an event, and checks a project's event root in project
-scope.
+프로젝트 범위는 설정한 Git 루트와 일치하는 경우(저장소가 아니면 현재 디렉터리)에만 프롬프트를 저장합니다. 전역 범위에서는 모든 프로젝트의 프롬프트를 저장합니다. 데이터는 플러그인의 쓰기 가능한 `PLUGIN_DATA` 디렉터리에 보관합니다. 헬퍼는 이벤트를 읽거나 처리하기 전에 수집이 켜져 있는지 확인하고, 프로젝트 범위에서는 이벤트의 프로젝트 루트도 확인합니다.
 
-## Analyze and retain data
+## 분석과 보관
 
-Run `$angry-insight` to analyze new pending prompts in the current scope. The
-skill reads each prompt with the best available preceding assistant response
-from its transcript, classifies it as `불만` or `불만 아님`, and searches Codex,
-Anthropic, Hacker News, and npm for possible solutions to each complaint.
-Search queries use only an anonymized complaint summary. Prompt and transcript
-text are not sent to those search sources.
+현재 범위의 새 대기 프롬프트를 분석하려면 `$angry-insight`를 실행합니다. 스킬은 대화 기록에서 가능한 직전 Codex 응답을 찾아 프롬프트를 분류합니다. 상태 값은 `complaint` 또는 `not-complaint`입니다. 불만 사례마다 Codex, Anthropic, Hacker News, npm을 검색해 해결책을 찾습니다. 검색어에는 익명화된 사례 요약만 사용하며, 프롬프트 원문과 대화 기록은 검색에 보내지 않습니다.
 
-Pending prompt text and transcript paths remain local for up to 30 days of
-active Codex use. The hook deletes expired entries on session start and
-analysis; expired entries are never analyzed. With no Codex
-process running, a local hook cannot execute at the exact expiration time.
-After successful analysis,
-non-complaint entries are deleted. For a complaint, the helper atomically saves
-an anonymized summary, observed mistake, and recommendation report before
-deleting the raw prompt and transcript path. Transcript files themselves are
-never deleted. A failed analysis leaves the pending entry available for retry
-until it expires. Saved complaint reports remain in `PLUGIN_DATA/cases/` until
-you clear them or remove the plugin data directory.
+대기 프롬프트 원문과 대화 기록 경로는 Codex를 사용하는 동안 최대 30일 보관됩니다. 세션 시작 때와 대기 항목을 분석할 때 만료된 기록을 삭제하며, 만료된 기록은 분석하지 않습니다. Codex가 실행 중이지 않을 때는 로컬 훅이 만료 시각에 맞춰 실행될 수 없습니다.
 
-Prompt submission writes one event file without scanning the queue. Expiration
-cleanup runs at session start and when the skill lists pending events. Duplicate
-session/turn deliveries are coalesced when the skill lists pending events.
+분석이 끝나면 `not-complaint` 항목을 삭제합니다. `complaint` 항목은 익명화된 요약, 확인된 실수, 권고 보고서를 원자적으로 저장한 다음 원본 프롬프트와 대화 기록 경로를 삭제합니다. 대화 기록 파일 자체는 삭제하지 않습니다. 분석에 실패하면 대기 항목은 만료될 때까지 재시도할 수 있습니다. 저장된 불만 보고서는 사용자가 지우거나 플러그인 데이터 디렉터리를 삭제할 때까지 `PLUGIN_DATA/cases/`에 보관됩니다.
 
-If the transcript cannot be parsed or the preceding response is unavailable,
-the skill reports that limitation and avoids guessing. Transcript formats are
-not a stable Codex hook interface.
+프롬프트 제출 시에는 대기열을 훑지 않고 이벤트 파일 하나만 씁니다. 만료 정리는 세션 시작과 스킬의 대기 목록 조회 때 실행합니다. 같은 세션과 턴에서 중복 전달된 이벤트는 스킬이 대기 목록을 조회할 때 합칩니다.
 
-## Manage collection and local data
+대화 기록을 분석할 수 없거나 직전 응답을 찾지 못하면 그 한계를 알리고 내용을 추측하지 않습니다. 대화 기록 형식은 안정된 Codex 훅 인터페이스가 아닙니다.
 
-Ask Codex to stop collection to disable future capture; this preserves pending
-prompts and reports. Ask to erase Angry Insight data to remove pending prompts
-and saved reports. The original Codex transcript files remain untouched.
+## 수집 설정과 로컬 데이터 관리
 
-## Privacy and changes
+수집을 중지해 달라는 요청은 이후의 수집을 끕니다. 기존 대기 프롬프트와 보고서는 유지됩니다. Angry Insight 데이터를 지워 달라는 요청은 대기 프롬프트와 저장된 보고서를 삭제합니다. 원본 Codex 대화 기록 파일은 그대로 둡니다.
 
-The plugin stores data only under its writable `PLUGIN_DATA` directory. It does
-not send prompts or transcripts to web search, external APIs, or remote
-databases. However, when `$angry-insight` runs, it includes the prompt and the
-best-effort preceding response in the current Codex model's context so the model
-can classify and summarize the case. The hook itself makes no model or network
-calls. Web research uses only an anonymized case summary and returns source
-links in the locally saved report.
+## 개인정보 보호와 변경 사항
 
-The plugin does not install packages or modify settings, instructions, or code.
+플러그인 데이터는 쓰기 가능한 `PLUGIN_DATA` 디렉터리 안에만 저장합니다. 프롬프트나 대화 기록을 웹 검색, 외부 API, 원격 데이터베이스로 보내지 않습니다. 다만 `$angry-insight`를 실행하면 분류와 요약을 위해 프롬프트 원문 및 가능한 직전 응답이 현재 Codex 모델의 문맥에 포함됩니다. 사용자는 이 분석 입력을 허용했습니다. 훅 자체는 모델이나 네트워크를 호출하지 않습니다. 웹 조사는 익명화된 사례 요약만 사용하고, 결과 링크를 로컬 보고서에 저장합니다.
+
+플러그인은 패키지를 설치하거나 사용자 설정, 지침, 코드를 수정하지 않습니다.

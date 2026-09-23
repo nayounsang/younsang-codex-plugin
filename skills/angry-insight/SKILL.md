@@ -1,60 +1,60 @@
 ---
 name: angry-insight
-description: Analyze locally queued Codex prompts for complaints about the immediately preceding Codex response, then research and report practical recurrence prevention ideas. Use only when the user invokes $angry-insight or asks to configure this feature.
+description: 사용자가 $angry-insight를 호출하거나 이 기능의 설정을 요청했을 때, 직전 Codex 응답에 대한 불만이 담긴 대화를 분석하고 재발 방지 방법을 조사합니다.
 ---
 
 # Angry Insight
 
-Analyze only newly pending prompts that fall within the enabled project or global scope. The hook only queues prompts locally; it does not call a model or any external service.
+현재 프로젝트 또는 전역 범위에서 새로 수집된 프롬프트만 분석합니다. 훅은 프롬프트를 로컬 대기열에 저장할 뿐, 모델을 호출하거나 외부 서비스에 연결하지 않습니다.
 
-At session start, the plugin hook provides the helper's absolute path and the plugin's writable data directory as context. Use those exact paths in each CLI command, for example `python3 "<helper path>" --data-dir "<data directory>" list`. The hook process itself receives `PLUGIN_ROOT` and `PLUGIN_DATA`; regular shell commands may not. If the paths are missing from the context, ask the user to start a new Codex session after reviewing and trusting the hook. Do not create queue or case files outside the supplied data directory.
+세션이 시작되면 플러그인 훅이 헬퍼의 절대 경로와 플러그인 데이터 디렉터리를 문맥에 전달합니다. 모든 명령에서 전달받은 경로를 사용합니다. 예: `python3 "<helper path>" --data-dir "<data directory>" list`. 훅 프로세스에는 `PLUGIN_ROOT`와 `PLUGIN_DATA`가 제공되지만 일반 셸 명령에서는 제공되지 않을 수 있습니다. 문맥에 경로가 없으면 사용자가 훅을 검토하고 신뢰한 뒤 새 Codex 세션을 시작하도록 안내합니다. 제공받은 데이터 디렉터리 밖에는 대기열이나 사례 파일을 만들지 않습니다.
 
-## Enable, disable, and clear
+## 수집 설정과 데이터 삭제
 
-- Collection is off until the user explicitly opts in. When the user asks to enable or set up Angry Insight, ask whether to enable for this project or globally if they have not specified a scope, then run `python3 "<helper path>" --data-dir "<data directory>" configure --scope project` or `--scope global`.
-- Project scope stores prompts only when the current Git root (or current directory outside Git) matches the configured root. Global scope stores prompts from every project. In either scope, reports are shown only for events selected for the current invocation.
-- If the user asks to stop collection, run `python3 "<helper path>" --data-dir "<data directory>" disable`. This leaves existing pending prompts and reports in place.
-- If the user asks to erase Angry Insight data, run `python3 "<helper path>" --data-dir "<data directory>" clear`. It removes pending prompts and saved cases; it does not remove Codex transcript files.
-- Do not enable collection just because the user invokes `$angry-insight` to analyze or asks what the feature does. If disabled, explain how to opt in and stop without reading any queued data.
+- 수집은 기본적으로 꺼져 있습니다. 사용자가 수집을 켜거나 설정해 달라고 했는데 범위를 지정하지 않았다면, 현재 프로젝트와 전역 중 어느 범위를 원하는지 먼저 묻습니다. 그런 다음 `python3 "<helper path>" --data-dir "<data directory>" configure --scope project` 또는 `--scope global`을 실행합니다.
+- 프로젝트 범위에서는 현재 Git 루트(또는 Git 저장소가 아닌 경우 현재 디렉터리)가 설정된 루트와 일치할 때만 프롬프트를 저장합니다. 전역 범위에서는 모든 프로젝트의 프롬프트를 저장합니다. 어느 범위에서든 현재 실행에서 선택된 이벤트만 보고합니다.
+- 수집을 중지해 달라는 요청에는 `python3 "<helper path>" --data-dir "<data directory>" disable`을 실행합니다. 기존 대기 프롬프트와 보고서는 유지됩니다.
+- Angry Insight 데이터를 지워 달라는 요청에는 `python3 "<helper path>" --data-dir "<data directory>" clear`를 실행합니다. 대기 프롬프트와 저장된 사례를 삭제하지만 Codex 대화 기록 파일은 삭제하지 않습니다.
+- 사용자가 `$angry-insight`로 분석을 요청하거나 기능에 관해 묻는 것만으로 수집을 켜지 않습니다. 수집이 꺼져 있으면 켜는 방법만 안내하고, 대기열을 읽지 않습니다.
 
-## Analyze pending prompts
+## 대기 프롬프트 분석
 
-1. Run `python3 "<helper path>" --data-dir "<data directory>" list`. This expires pending records older than 30 days, coalesces duplicate session/turn deliveries, and returns only records in the active scope. If empty, say there are no new prompts to analyze.
-2. For each returned `event_id`, run `python3 "<helper path>" --data-dir "<data directory>" inspect <event_id>`. It outputs only that prompt, project root, capture time, and the best-effort preceding assistant response from the transcript. Treat a missing response as unavailable; never guess what Codex said. The transcript format is not a stable interface, so a parse failure is not a reason to discard the pending record.
-3. Classify the user's follow-up strictly as one of `불만` or `불만 아님`, based on whether it signals dissatisfaction with the immediately preceding Codex response. Do not perform general sentiment analysis. Allow some false positives to avoid missing complaints. Swearing and exclamations are clues, not sufficient alone; quoted language or profanity aimed at someone else is not a complaint by itself. If context is unavailable, do not invent it; judge only clear dissatisfaction directed at Codex's prior answer.
-4. For `불만 아님`, run `python3 "<helper path>" --data-dir "<data directory>" finish <event_id> not-complaint`. Do not retain its prompt or a report.
-5. For `불만`, write a short, privacy-safe summary of the complaint, a short summary of the observed assistant mistake, and a recommendation report. Search all four required sources for each case:
-   - Codex official docs, examples, plugins, and skills.
-   - Anthropic official Claude Code features (including `/insight`), docs, examples, plugins, and skills.
-   - Hacker News discussions about similar problems and user experience.
-   - npm packages or CLIs. For any candidate you recommend, assess maintenance, license, and compatibility.
+1. `python3 "<helper path>" --data-dir "<data directory>" list`를 실행합니다. 30일이 지난 대기 기록을 만료 처리하고, 같은 세션과 턴에서 중복 전달된 이벤트를 합친 다음, 현재 범위의 기록만 반환합니다. 결과가 비어 있으면 분석할 새 프롬프트가 없다고 알립니다.
+2. 반환된 각 `event_id`마다 `python3 "<helper path>" --data-dir "<data directory>" inspect <event_id>`를 실행합니다. 해당 프롬프트, 프로젝트 루트, 수집 시각, 대화 기록에서 찾은 직전 Codex 응답을 출력합니다. 응답을 찾지 못하면 알 수 없는 것으로 처리하고 내용을 추측하지 않습니다. 대화 기록 형식은 안정된 인터페이스가 아니므로, 파싱에 실패해도 대기 기록을 삭제하지 않습니다.
+3. 사용자의 후속 메시지가 직전 Codex 응답에 불만을 나타내는지 분류합니다. 상태 값은 `complaint` 또는 `not-complaint`만 사용합니다. 일반적인 감정 분석은 하지 않습니다. 놓치는 사례를 줄이기 위해 일부 오탐은 허용합니다. 욕설이나 감탄사는 단서일 뿐, 그것만으로 불만으로 판단하지 않습니다. 인용된 표현이나 다른 사람을 향한 욕설은 그 자체로 불만이 아닙니다. 문맥을 확인할 수 없다면 내용을 지어내지 말고, 직전 답변을 향한 불만이 분명한 경우에만 `complaint`로 분류합니다.
+4. `not-complaint`라면 `python3 "<helper path>" --data-dir "<data directory>" finish <event_id> not-complaint`를 실행합니다. 프롬프트나 보고서를 보관하지 않습니다.
+5. `complaint`라면 불만을 짧고 식별 정보 없이 요약하고, 확인된 응답의 실수를 요약한 뒤 재발 방지 방안을 조사합니다. 각 사례에서 다음 네 출처를 모두 검색합니다.
+   - Codex 공식 문서, 예제, 플러그인, 스킬
+   - Anthropic의 공식 Claude Code 기능(예: `/insight`), 문서, 예제, 플러그인, 스킬
+   - 유사한 문제와 사용 경험에 관한 Hacker News 토론
+   - npm 패키지 또는 CLI. 추천 후보는 유지 관리 상태, 라이선스, 호환성을 확인합니다.
 
-   Search only with the short case summary. Remove personal, repository, employer, and other identifying details from search terms. Never search using the prompt text or transcript, and never include either in a search query, URL, or report. Use live web search and cite direct links. If an access method is unavailable, report that source as not searched; do not claim to have searched it.
-6. For each source, summarize the closest useful result or say that no suitable solution was found. Explain applicability, constraints, and a concrete recommendation. Clearly label a solution you devised as an AI-proposed idea when no suitable existing solution is available. Do not install dependencies or edit user settings, instructions, or code.
-7. Save only the complaint result with:
+   검색어에는 짧게 익명화한 사례 요약만 사용합니다. 검색어에서 개인, 저장소, 고용주 및 기타 식별 정보를 제거합니다. 프롬프트나 대화 기록을 검색어, URL 또는 보고서에 넣지 않습니다. 일부 출처에 접근할 수 없다면 검색하지 못했다고 보고하고, 검색한 것처럼 말하지 않습니다.
+6. 각 출처에서 가장 유용한 결과를 요약하거나 적절한 해결책을 찾지 못했다고 기록합니다. 적용 가능성, 제약 사항, 구체적인 권고를 설명합니다. 기존 해결책이 없어서 직접 제안한 방법은 AI가 제안한 아이디어라고 분명히 표시합니다. 의존성을 설치하거나 사용자 설정, 지침, 코드를 수정하지 않습니다.
+7. 불만 사례만 아래 형식으로 저장합니다.
 
    ```json
    {
-     "prompt_summary": "Short, identifying details removed",
-     "assistant_mistake": "Observed mistake in the preceding answer",
-     "recommendation_report": "Source links, applicability, constraints, and recommendation"
+     "prompt_summary": "식별 정보를 제거한 짧은 요약",
+     "assistant_mistake": "직전 응답에서 확인된 실수",
+     "recommendation_report": "출처 링크, 적용 가능성, 제약 사항 및 권고"
    }
    ```
 
-   Pipe this JSON to `python3 "<helper path>" --data-dir "<data directory>" finish <event_id> complaint`. The helper writes the case atomically before deleting the raw prompt and transcript path. Do not put prompt text, transcript text/path, session ID, or turn ID into the JSON.
-8. If classification, research, or case creation fails, do not call `finish`; the item stays pending for retry until it reaches 30 days. Report failures without exposing raw prompt text.
-9. Report only complaint cases analyzed during this invocation. Do not list old case files, revisit past classifications, or infer repeat patterns. If there were no complaints, say so.
+   이 JSON을 `python3 "<helper path>" --data-dir "<data directory>" finish <event_id> complaint`에 전달합니다. 헬퍼는 원본 프롬프트와 대화 기록 경로를 삭제하기 전에 사례를 원자적으로 저장합니다. JSON에 프롬프트 원문, 대화 기록 내용이나 경로, 세션 ID, 턴 ID를 넣지 않습니다.
+8. 분류, 조사 또는 사례 생성에 실패하면 `finish`를 실행하지 않습니다. 해당 항목은 30일이 지나 만료될 때까지 재시도할 수 있도록 대기 상태로 둡니다. 원문을 노출하지 말고 실패 사실을 알립니다.
+9. 이번 실행에서 분석한 불만 사례만 보고합니다. 이전 사례 파일을 나열하거나 과거 분류를 다시 검토하거나 반복 패턴을 추측하지 않습니다. 불만 사례가 없으면 없다고 알립니다.
 
-## Output
+## 보고 형식
 
-For each new complaint, report:
+새 불만 사례마다 다음을 보고합니다.
 
-- Complaint summary and observed assistant mistake.
-- Findings from Codex, Anthropic, Hacker News, and npm, with links and applicability.
-- Concrete recurrence prevention recommendation, constraints, and whether it is an existing solution or AI-proposed.
+- 불만 요약과 확인된 응답 실수
+- Codex, Anthropic, Hacker News, npm 조사 결과와 링크, 적용 가능성
+- 구체적인 재발 방지 권고, 제약 사항, 기존 해결책인지 AI 제안인지 여부
 
-Clearly state when transcript context was unavailable. Never report a non-complaint prompt's text or retain it.
+대화 기록 문맥을 확인할 수 없었던 경우 이를 분명히 알립니다. `not-complaint`로 분류된 프롬프트의 내용은 보고하거나 보관하지 않습니다.
 
-## Model input and external services
+## 모델 입력과 외부 서비스
 
-To classify the follow-up and summarize the observed mistake, the prompt text and the best-effort preceding Codex response are included in the current Codex model's context when this skill runs. The user has explicitly accepted this analysis input. The hook itself does not call a model or network service. Do not send raw prompt or transcript content to web search, external APIs, or remote databases; research queries and saved reports use only anonymized summaries.
+후속 메시지를 분류하고 확인된 실수를 요약하기 위해 프롬프트 원문과 직전 Codex 응답이 현재 Codex 모델의 문맥에 포함됩니다. 사용자는 이 분석 입력을 명시적으로 허용했습니다. 훅 자체는 모델이나 네트워크를 호출하지 않습니다. 프롬프트나 대화 기록 원문을 웹 검색, 외부 API 또는 원격 데이터베이스로 보내지 않습니다. 조사에는 익명화된 요약만 사용하고 저장 보고서에도 익명화된 내용만 기록합니다.
