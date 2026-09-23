@@ -7,6 +7,7 @@
   },
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
+  "hooks": "./hooks/hooks.json",
   "interface": {
     "displayName": "Younsang Codex Skills",
     "shortDescription": "super useful skills for Codex.",

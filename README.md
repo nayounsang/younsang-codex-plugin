@@ -54,6 +54,15 @@ Codex의 기존 빌트인 리뷰 스킬을 확장해 깊고 다양한 관점에�
   버그 재현 절차 중 필요한 것을 얻기 위한 독립적인 하위 스킬로 제공합니다.
 - 자세한 것은 [`docs/write-pr-content.md`](docs/write-pr-content.md)를 참고하세요.
 
+### `angry-insight`
+
+명시적으로 opt-in한 프롬프트를 로컬에서 분석해 Codex 응답 불만 사례와 재발 방지안을 확인하세요.
+
+- `UserPromptSubmit` hook을 신뢰한 뒤에만 로컬 대기열에 기록합니다. 수집은 기본 꺼져 있고 프로젝트별 또는 전역 범위를 선택합니다.
+- 미처리 프롬프트는 최대 30일 보관하며, 불만 사례의 익명화된 요약과 개선안만 로컬에 남깁니다.
+- Codex, Anthropic, Hacker News, npm 레퍼런스를 사례별로 조사합니다.
+- 자세한 것은 [`docs/angry-insight.md`](docs/angry-insight.md)를 참고하세요.
+
 ## 추천 외부 도구
 
 > nayounsang이 제작하지 않았으나, 외부에서 괜찮은 도구도 함께 제공합니다.

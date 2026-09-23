@@ -1,0 +1,30 @@
+{
+  "description": "Opt-in local prompt queue for the angry-insight skill.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/skills/angry-insight/scripts/queue.py\" expire",
+            "commandWindows": "py -3 \"${PLUGIN_ROOT}/skills/angry-insight/scripts/queue.py\" expire",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/skills/angry-insight/scripts/queue.py\" capture",
+            "commandWindows": "py -3 \"${PLUGIN_ROOT}/skills/angry-insight/scripts/queue.py\" capture",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
