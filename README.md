@@ -1,6 +1,6 @@
 # Younsang Codex Plugin
 
-nayounsang이 Codex와 개발할 때 사용하는 유틸리티 모음입니다.
+nayounsang이 Codex CLI와 개발할 때 사용하는 유틸리티 모음입니다.
 
 스킬별 설명과 사용 방법은 [docs](docs/)를 참조하세요.
 개발 및 추가 작업 절차는 [개발 워크플로우](docs/development-workflow.md)를
@@ -8,20 +8,14 @@ nayounsang이 Codex와 개발할 때 사용하는 유틸리티 모음입니다.
 
 ## 설치
 
-로컬 marketplace를 등록한 뒤 플러그인을 설치합니다.
+먼저 GitHub 저장소의 marketplace를 Codex CLI에 등록하고, 목록에서 플러그인을 설치합니다.
 
 ```bash
-# 최초 1회: 플러그인을 포함한 로컬 marketplace 등록
-codex plugin marketplace add /path/to/marketplace-root
+# 최초 1회: marketplace 등록
+codex plugin marketplace add nayunsang/younsang-codex-plugin --ref main
 
 # 플러그인 설치
-codex plugin add younsang-codex-plugin@<marketplace-name>
-```
-
-Personal marketplace를 이미 사용 중이라면 다음 명령으로 설치할 수 있습니다.
-
-```bash
-codex plugin add younsang-codex-plugin@personal
+codex plugin add younsang-codex-plugin@younsang-codex-plugins
 ```
 
 설치 후 새 Codex thread를 시작하면 플러그인의 스킬을 사용할 수 있습니다.
@@ -59,3 +53,25 @@ Codex의 기존 빌트인 리뷰 스킬을 확장해 깊고 다양한 관점에�
 - 기능 변경 명세, 외부 동작 다이어그램, 참고 링크, benchmark, UI 캡처,
   버그 재현 절차 중 필요한 것을 얻기 위한 독립적인 하위 스킬로 제공합니다.
 - 자세한 것은 [`docs/write-pr-content.md`](docs/write-pr-content.md)를 참고하세요.
+
+## 추천 메뉴
+
+> nayounsang이 제작하지 않았으나, 외부에서 괜찮은 도구도 함께 제공합니다.
+
+### [UI UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)
+
+UI UX Pro Max는 UI/UX 디자인 인텔리전스 스킬입니다.
+
+- 웹·모바일·데스크톱 UI의 구조와 시각적 방향 설계
+- 79개 UI 스타일, 192개 제품별 색상 팔레트, 74개 폰트 조합 검색
+- 접근성, 반응형 레이아웃, 인터랙션, 애니메이션, 차트 UX 검토
+- React, Flutter, SwiftUI, Tailwind, shadcn/ui 등 스택별 가이드
+- 프로젝트 요구사항을 바탕으로 한 디자인 시스템 생성
+
+### 설치
+
+```bash
+# marketplace가 등록된 상태여야 합니다.
+
+codex plugin add ui-ux-pro-max@younsang-codex-plugins
+```
