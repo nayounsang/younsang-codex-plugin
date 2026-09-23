@@ -13,7 +13,7 @@
     "longDescription": "A modular local plugin that groups independent Codex skills under one installable bundle. Each skill lives in its own directory with its own references and optional agent metadata.",
     "developerName": "Younsang",
     "category": "Developer Tools",
-    "capabilities": ["Review", "Read-only analysis"],
+    "capabilities": ["Review", "Read-only analysis", "Tool installation"],
     "defaultPrompt": "Use the appropriate skill for this task."
   }
 }
