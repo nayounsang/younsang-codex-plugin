@@ -49,8 +49,8 @@ until it expires. Saved complaint reports remain in `PLUGIN_DATA/cases/` until
 you clear them or remove the plugin data directory.
 
 Prompt submission writes one event file without scanning the queue. Expiration
-and duplicate session/turn coalescing happen at session start or when the skill
-lists pending events.
+cleanup runs at session start and when the skill lists pending events. Duplicate
+session/turn deliveries are coalesced when the skill lists pending events.
 
 If the transcript cannot be parsed or the preceding response is unavailable,
 the skill reports that limitation and avoids guessing. Transcript formats are
