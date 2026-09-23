@@ -54,7 +54,7 @@ Codex의 기존 빌트인 리뷰 스킬을 확장해 깊고 다양한 관점에�
   버그 재현 절차 중 필요한 것을 얻기 위한 독립적인 하위 스킬로 제공합니다.
 - 자세한 것은 [`docs/write-pr-content.md`](docs/write-pr-content.md)를 참고하세요.
 
-## 추천 메뉴
+## 추천 외부 도구
 
 > nayounsang이 제작하지 않았으나, 외부에서 괜찮은 도구도 함께 제공합니다.
 
@@ -68,10 +68,18 @@ UI UX Pro Max는 UI/UX 디자인 인텔리전스 스킬입니다.
 - React, Flutter, SwiftUI, Tailwind, shadcn/ui 등 스택별 가이드
 - 프로젝트 요구사항을 바탕으로 한 디자인 시스템 생성
 
-### 설치
+#### 설치
 
 ```bash
 # marketplace가 등록된 상태여야 합니다.
 
 codex plugin add ui-ux-pro-max@younsang-codex-plugins
 ```
+
+### [Plannotator](https://plannotator.ai/)
+
+`install-plannotator` 스킬로 Plannotator를 설치하고 Codex 연동을 설정합니다.
+
+- `$install-plannotator`를 요청하면 공식 설치 스크립트를 실행합니다.
+- 설치 프로그램이 Codex 연동도 설정하므로 별도 설정은 필요 없습니다.
+- 공식 설치 문서를 따라 직접 설치하는 방법도 권장합니다.
