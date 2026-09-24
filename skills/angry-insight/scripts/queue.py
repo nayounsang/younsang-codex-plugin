@@ -260,18 +260,20 @@ def inspect(event_id: str) -> None:
 
     transcript_path = record.get("transcript_path")
     messages = transcript_messages(Path(transcript_path)) if isinstance(transcript_path, str) else []
-    prompt = record.get("prompt_text", "")
-    anchor = None
-    for index, (role, text, turn_id) in enumerate(messages):
-        if role == "user" and (text.strip() == prompt.strip() or turn_id == record.get("turn_id")):
-            anchor = index
+    event_turn_id = record.get("turn_id")
+    matching_user_indices = [
+        index
+        for index, (role, _, turn_id) in enumerate(messages)
+        if role == "user" and event_turn_id is not None and turn_id == event_turn_id
+    ]
+    anchor = matching_user_indices[0] if len(matching_user_indices) == 1 else None
     candidates = messages[:anchor] if anchor is not None else messages
     previous = next((text for role, text, _ in reversed(candidates) if role == "assistant"), None)
     output = {
         "event_id": event_id,
         "project_root": record.get("project_root"),
         "captured_at": record.get("captured_at"),
-        "prompt_text": prompt,
+        "prompt_text": record.get("prompt_text", ""),
         "previous_assistant_response": previous,
         "transcript_match": anchor is not None,
     }
