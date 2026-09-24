@@ -1,5 +1,7 @@
 # Younsang Codex Plugin
 
+> 주의: MacOS M1 + Codex CLI에서 동작하는 것이 전제합니다. 다른 환경은 동작 여부를 모르며, 호환할 계획도 없습니다.(제가 디바이스를 바꾸는게 아니면)
+
 nayounsang이 Codex CLI와 개발할 때 사용하는 유틸리티 모음입니다.
 
 스킬별 설명과 사용 방법은 [docs](docs/)를 참조하세요.
