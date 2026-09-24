@@ -54,6 +54,17 @@ Codex의 기존 빌트인 리뷰 스킬을 확장해 깊고 다양한 관점에�
   버그 재현 절차 중 필요한 것을 얻기 위한 독립적인 하위 스킬로 제공합니다.
 - 자세한 것은 [`docs/write-pr-content.md`](docs/write-pr-content.md)를 참고하세요.
 
+### `angry-insight`
+
+> 왜 Codex는 `/insight`가 없을까.
+
+Codex가 더 이상 바보같은 행동을 하지 말도록 유효한 잡도리를 하세요.
+지루한 AI Agent 교육보단, 빡침을 표현하고 가꿔보세요.
+
+- Codex에 보낸 프롬프트를 로컬에 수집합니다. 이 프롬프트들을 분석해 불만 사례 데이터를 얻습니다.
+- 여러 레퍼런스(Codex, Hacker News, GitHub 등)에서 불만 사례별로 재발하지 않을 해결책과 실행 가이드를 제안합니다.
+- 자세한 것은 [`docs/angry-insight.md`](docs/angry-insight.md)를 참고하세요.
+
 ## 추천 외부 도구
 
 > nayounsang이 제작하지 않았으나, 외부에서 괜찮은 도구도 함께 제공합니다.

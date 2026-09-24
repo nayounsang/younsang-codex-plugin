@@ -1,0 +1,30 @@
+{
+  "description": "Trusting UserPromptSubmit starts local capture of submitted prompts for Angry Insight.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/skills/angry-insight/scripts/queue.py\" session-start",
+            "commandWindows": "py -3 \"${PLUGIN_ROOT}/skills/angry-insight/scripts/queue.py\" session-start",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/skills/angry-insight/scripts/queue.py\" capture",
+            "commandWindows": "py -3 \"${PLUGIN_ROOT}/skills/angry-insight/scripts/queue.py\" capture",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
