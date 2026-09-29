@@ -8,7 +8,7 @@ nayounsang이 Codex CLI와 개발할 때 사용하는 유틸리티 모음입니�
 개발 및 추가 작업 절차는 [개발 워크플로우](docs/development-workflow.md)를
 참조하세요.
 
-## 설치
+## 전역 설치
 
 먼저 GitHub 저장소의 marketplace를 Codex CLI에 등록하고, 목록에서 플러그인을 설치합니다.
 
@@ -21,6 +21,43 @@ codex plugin add younsang-codex-plugin@younsang-codex-plugins
 ```
 
 설치 후 새 Codex thread를 시작하면 플러그인의 스킬을 사용할 수 있습니다.
+
+## 프로젝트 범위로 설치
+
+특정 프로젝트에서만 플러그인을 사용하려면 대상 프로젝트에 로컬 marketplace 항목을 추가합니다.
+
+1. 프로젝트에서 `.agents/plugins/marketplace.json`을 만듭니다. 기존 파일이 있으면 `plugins` 배열에 다음 항목을 추가합니다.
+
+   ```json
+   {
+     "name": "marketplace-name",
+     "plugins": [
+       {
+         "name": "younsang-codex-plugin",
+         "source": {
+           "source": "url",
+           "url": "https://github.com/nayounsang/younsang-codex-plugin"
+         },
+         "policy": {
+           "installation": "AVAILABLE",
+           "authentication": "ON_INSTALL"
+         },
+         "category": "Productivity"
+       }
+     ]
+   }
+   ```
+
+   이미 marketplace 파일이 있다면 최상위 `name`을 유지하고, 기존 `plugins` 배열에 플러그인 객체만 추가하세요. 파일이 없다면 `name`은 자유롭게 설정할 수 있습니다.
+
+2. 프로젝트의 `.codex/config.toml`에 다음을 추가합니다.
+
+   ```toml
+   [plugins."younsang-codex-plugin@marketplace-name"]
+   enabled = true
+   ```
+
+3. Codex에서 대상 프로젝트를 신뢰된 프로젝트로 열고 새 스레드를 시작하면 설정이 적용됩니다.
 
 ## Features
 
