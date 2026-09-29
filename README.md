@@ -58,15 +58,12 @@ Codex의 기존 빌트인 리뷰 스킬을 확장해 깊고 다양한 관점에�
 
 ### [codex-complex-prompt](https://github.com/nayounsang/codex-complex-prompt)
 
-문서 작업, 리서치 뿐만 아니라 프롬프트까지 직접 작성하고 AI와 함께 검토 가능한 에디터를 제공합니다. 그림, 다이어그래까지 제공하는 마크다운 에디터로 피드백 루프가 긴 채팅 대신 Codex에서 복잡한 작업을 해보세요.
+복잡한 프롬프트를 브라우저의 마크다운 에디터에서 작성하고 Codex 피드백을 반영해 다듬을 수 있습니다.
 
+- 설치하려면 이 저장소의 `$install-complex-prompt` 스킬을 요청하세요. 스킬은 환경을 확인한 뒤 설치 명령을 실행합니다.
 - 자세한 내용은 [`docs/complex-prompt.md`](docs/complex-prompt.md)를 참고하세요.
 
 ```bash
-# marketplace가 등록된 상태여야 합니다.
-codex plugin add codex-complex-prompt@younsang-codex-plugins
-
-# 플러그인 추가 이후 설치 스크립트를 실행해주세요.
 npx @codex-complex-prompt/cli-bridge hook install
 ```
 
