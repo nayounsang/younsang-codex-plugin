@@ -10,7 +10,15 @@
 
 ## 2. 설치
 
-이 marketplace의 `$install-complex-prompt` 스킬에 설치를 요청하면 지원 환경인지 확인한 뒤 CLI 설치 명령을 실행합니다. 스킬을 사용하지 않고 직접 설치하려면 macOS M1에서 Node.js 24 이상과 `npx`를 준비하고 다음 명령을 실행합니다.
+설치 방법은 두 가지입니다. 아래 중 하나만 선택하세요.
+
+### 이 marketplace의 스킬로 설치
+
+Codex CLI에서 `$install-complex-prompt` 스킬을 요청합니다. 스킬이 macOS M1, Codex CLI, Node.js 24 이상, `npx` 사용 가능 여부를 확인한 뒤 설치 명령을 실행합니다.
+
+### 설치 명령으로 직접 설치
+
+[Codex Complex Prompt 저장소](https://github.com/nayounsang/codex-complex-prompt)에서 안내하는 설치 명령을 터미널에서 직접 실행합니다.
 
 ```bash
 npx @codex-complex-prompt/cli-bridge hook install
