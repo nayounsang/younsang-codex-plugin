@@ -6,7 +6,7 @@ Follow the repository's established language, naming, framework, and assertion c
 
 ## Standard
 
-Each test should prove one coherent scenario: one relevant actor or caller performs one action or flow under one condition and observes one outcome. Split a test when it proves independent behaviors, conditions, or outcomes.
+Each test should prove one coherent scenario: one relevant actor or caller performs one action or flow under one condition and observes one outcome. Before judging a test, identify its caller, condition, behavior, and observable result. Split it when it proves independently meaningful behaviors, conditions, or outcomes.
 
 Use Arrange, Act, Assert order:
 
@@ -14,15 +14,15 @@ Use Arrange, Act, Assert order:
 2. **Act:** perform the behavior under test once setup is complete.
 3. **Assert:** verify the observable result of that behavior.
 
-Keep multiple assertions together when they jointly establish one contract, such as the status, headers, and body of one response. Split assertions when they represent independent behaviors or outcomes.
+Keep multiple assertions together when they jointly establish one contract, such as the status, headers, and body of one response. Split assertions when they represent independent behaviors or outcomes. An `and`, `or`, comma, or other list in a test title is a signal to inspect the scenario, not an automatic reason to split it: `creates, returns, and deletes a handler` describes separate outcomes, while one response's status, headers, and body can remain together.
 
 Prefer the relevant user flow at the public boundary: what a UI user, CLI user, API consumer, or other product-facing caller does and observes. For pure functions, schemas, concurrency, and other behavior that cannot reasonably be expressed as a user flow, test the caller-facing technical contract instead.
 
 ## Dynamic test cases
 
-Keep cases statically visible in the test file. Avoid generating a case list with `.map`, `.flatMap`, filtering, deduplication, or helpers when that hides which cases run, makes the suite grow unexpectedly, or prevents useful analysis.
+Inspect `.map`, `.flatMap`, filtering, deduplication, and helper functions that create test cases. Report them when they hide which cases run, make the suite grow unexpectedly, or prevent useful analysis; dynamic input data or fixtures inside one scenario are not a concern by themselves.
 
-Use parameterized tests when they express one shared scenario with the same Arrange, Act, and Assert shape and the rows remain easy to inspect. Prefer separately named tests when rows have different behavior, setup, or expected outcomes.
+Use parameterized tests such as `it.each` when every row shares one scenario structure and the same Arrange, Act, and Assert shape, and the inline cases remain easy to inspect. Prefer separately named tests when rows have different behavior, setup, or expected outcomes.
 
 ## Titles and observable outcomes
 
@@ -63,16 +63,18 @@ over a single test that branches between the two outcomes.
 
 An enumerating title is a prompt to inspect the test, not an automatic failure. Split only when the listed actions, conditions, or outcomes are independently meaningful. A title describing one response's status, headers, and body may remain one scenario; a title describing creation, retrieval, and deletion usually should not.
 
+Conditions are part of the scenario boundary. For example, “prints help and rejects unknown commands” combines separate scenarios; calls with no command, `--help`, and an unknown command should have separately named tests. Do not hide different outcomes behind conditional assertions in one test.
+
 ## Review workflow
 
 Before reporting an issue:
 
 1. State the actor or caller, action, condition, and observable outcome represented by the test.
 2. Confirm whether the test follows a user flow or a justified caller-facing technical contract.
-3. Check that setup serves only that scenario.
-4. Check that the Act phase performs the relevant behavior without unrelated actions.
-5. Check that assertions focus on behavior rather than private helpers, incidental object shape, or call order unless those are the contract.
-6. Check for hidden branches, generated cases, vague titles, and unnecessary implementation coupling.
+3. Check that Arrange includes only setup for the scenario, Act performs its behavior, and Assert checks its observable result.
+4. Check that assertions focus on behavior rather than private helpers, incidental object shape, or call order unless those are the contract.
+5. Inspect enumerating titles, branches, and generated cases for independent scenarios; keep multiple assertions when they establish one contract.
+6. Check for vague outcome names and unnecessary implementation coupling.
 7. Compare with neighboring tests and repository conventions before recommending a change.
 
 ## Finding criteria
