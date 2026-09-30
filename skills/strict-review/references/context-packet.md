@@ -21,7 +21,7 @@ review_manifest:
   omitted_context: []
 ```
 
-Inspect the complete changed files when practical, then retrieve only context relevant to each changed symbol: enclosing function/class, direct callers and consumers, sibling implementations, interfaces, schemas, tests, and external boundaries. Use existing repository instructions and conventions as evidence.
+Inspect the complete changed files when practical, then retrieve only context relevant to each changed symbol: the complete enclosing function/class, direct callers and consumers, sibling implementations, interfaces, schemas, tests, and external boundaries. Readability review must include the complete enclosing symbol even when only a small hunk changed; a diff-only packet hides control flow and local state that determine whether the code is understandable. Use existing repository instructions and conventions as evidence.
 
 ## Packet construction
 
@@ -52,6 +52,7 @@ Use separate packets for the always-on reviewers:
 - **Behavior:** changed control flow, success/failure paths, inputs, retries, state transitions, and external effects.
 - **Security:** trust boundaries, identity, authorization, validation, secrets, sensitive data, code/data interpretation, and unsafe sinks.
 - **Performance:** data volume, repeated work, I/O, query behavior, caching, retries, concurrency, memory, and hot paths.
+- **Readability:** complete changed symbols, their local control flow and state changes, meaningful call boundaries, and the maintenance consequence of confusing or tangled code.
 - **Architecture:** responsibilities, dependency direction, change propagation, duplication, abstraction boundaries, and test seams.
 - **Semantic model:** new or renamed symbols, domain vocabulary, state/role/entity distinctions, constructors, factories, and all relevant call sites.
 - **Test quality, conditional:** changed test files, specs, fixtures, mocks, helpers, the minimum public contract under test, and neighboring tests.

@@ -8,7 +8,7 @@ Each reviewer should return records shaped like:
 
 ```yaml
 candidate:
-  category: correctness | security | performance | architecture | semantic-model | test-quality | dependency-candidate | ecosystem-candidate | operations
+  category: correctness | security | performance | readability | architecture | semantic-model | test-quality | dependency-candidate | ecosystem-candidate | operations
   priority: P0 | P1 | P2 | P3 | R1 | R2 | R3 | T1 | T2 | T3 | candidate
   status: proposed
   path: src/example.ts
@@ -85,7 +85,7 @@ Use:
 or:
 
 ```text
-[R2] Imperative structural or semantic title — path/to/file.ts:line
+[R2] Imperative readability, structural, or semantic title — path/to/file.ts:line
 ```
 
 or, when the test-quality reviewer was activated:
@@ -108,8 +108,8 @@ P priorities:
 R priorities:
 
 - `R1`: serious boundary, dependency, or change-propagation problem;
-- `R2`: material responsibility mixing, duplicated policy, semantic ambiguity, or test coupling;
-- `R3`: concrete localized structural or naming improvement with limited current impact.
+- `R2`: material readability barriers, responsibility mixing, duplicated policy, semantic ambiguity, or test coupling;
+- `R3`: concrete localized readability, structural, or naming improvement with limited current impact.
 
 T priorities:
 
