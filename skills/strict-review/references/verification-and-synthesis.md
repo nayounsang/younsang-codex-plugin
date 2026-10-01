@@ -8,7 +8,7 @@ Each reviewer should return records shaped like:
 
 ```yaml
 candidate:
-  category: correctness | security | performance | readability | architecture | semantic-model | test-quality | dependency-candidate | ecosystem-candidate | operations
+  category: correctness | security | performance | reachability-defense | compatibility | accessibility | readability | architecture | semantic-model | test-quality | dependency-candidate | ecosystem-candidate | operations
   priority: P0 | P1 | P2 | P3 | R1 | R2 | R3 | T1 | T2 | T3 | candidate
   status: proposed
   path: src/example.ts
@@ -42,6 +42,8 @@ The verifier must check:
 - the evidence supports the stated consequence;
 - the priority is proportional;
 - the proposed direction addresses the cause rather than only the symptom.
+
+For reachability/defense candidates, verify the value origin, supported entry path, and invariant source. Confirm that the proposed defense is redundant or masks an error on that path before reporting it; retain defenses required at external boundaries, for corrupted-data recovery, or for demonstrated races. For compatibility candidates, verify the changed public contract and affected consumer or migration path. For accessibility candidates, verify the changed control, relevant keyboard/assistive-technology path, and observable failure; visual preference alone is insufficient.
 
 Classify each candidate:
 

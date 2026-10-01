@@ -27,6 +27,12 @@ Always inspect changed trust boundaries, even when no obvious security keyword a
 
 Always inspect the cost model of changed behavior. Check repeated work, data size, query count, N+1 behavior, unbounded inputs, serialization, network/filesystem I/O, cache consistency, retries, timeouts, concurrency, memory, and hot paths. A concrete loop, I/O path, data-volume assumption, or resource consequence is enough for a candidate; do not require a second reviewer to agree.
 
+### Reachability and defense proportionality
+
+Run for every review. Trace where relevant values and states enter the system, including user input, public APIs or CLIs, persisted data, and asynchronous work. Check supported paths beyond the visible UI flow, such as direct API calls, deep links, stale stored data, and races. Distinguish real external-boundary validation, corrupted-data recovery, and concurrency protection from guards on states that types, schemas, or caller preconditions make unreachable. Check whether the same invariant is validated in multiple layers and whether fallback or exception handling hides the actual failure. Verify that a reusable component does not reach across its domain boundary or intended scope.
+
+Report unnecessary branching, duplicate checks, or error-hiding behavior only when removing or changing the defense can be tied to a concrete supported path and consequence. Do not call real boundary validation, data recovery, or race protection unnecessary only because the current UI cannot reproduce the condition. Do not report code volume or speculative future requirements by themselves.
+
 ### Readability and maintainability
 
 Review whether a future contributor can follow the changed behavior and make a local, correct change without reconstructing hidden state or unrelated layers. Read the complete enclosing function or type, not only the diff hunk. Trace the main success path and at least one meaningful branch through the values and state it changes.
@@ -74,6 +80,18 @@ Report a semantic finding only when the name claims a narrower state, role, phas
 The behavior and boundary reviewers may still report material missing coverage or contract risks for production changes. Do not apply the test-quality rubric unless the test-quality reviewer is activated.
 
 ## Conditional specialists
+
+### Public contract compatibility reviewer
+
+Activate when a changed file alters a contract an external consumer may rely on: public API/export, CLI argument/output/exit-code behavior, user setting or schema, stored format, or plugin/hook boundary. Find in-repository consumers and declared external contracts. Compare names, types, defaults, requiredness, semantics, and input/output/error behavior before and after the change. For stored data or settings, trace reading old data, conversion or migration, and failure behavior. For removals, renames, or default changes, check for a replacement path and transition steps.
+
+Do not report a compatibility finding without an actual public-contract change or affected consumer path. For internal changes with no impacted consumers, record the reviewer as not applicable in the manifest rather than inventing a contract concern.
+
+### UI accessibility and interaction reviewer
+
+Activate when UI code changes. For visual-only changes with no accessibility behavior impact, inspect only the applicable checklist items. Check that interactive controls expose accessible names, roles, and states; keyboard users can reach and operate controls in a screen-consistent focus order; dialogs set initial focus, return focus on close, and contain focus when modal; input errors are associated with fields; dynamic errors, success, and loading states reach assistive technology; meaning is not conveyed by color alone; and animation changes respect reduced-motion preferences.
+
+Report a specific control, keyboard or assistive-technology user path, and observable failure. Do not report visual preference or inaccessible behavior that is unchanged and unrelated to the diff. Use the [Microsoft HVE Core review lens checklist](https://github.com/microsoft/hve-core/blob/main/.github/skills/coding-standards/code-review/references/lens-checklists.md) as a grounding reference, while applying this repository's scope and evidence rules.
 
 ### Test quality reviewer
 

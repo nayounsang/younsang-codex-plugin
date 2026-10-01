@@ -15,6 +15,8 @@ review_manifest:
   changed_boundaries: []
   callers_and_consumers: []
   relevant_tests: []
+  public_contracts: []
+  accessibility_surfaces: []
   repository_vocabulary: []
   selected_specialists: []
   dependency_search_scope: []
@@ -50,12 +52,15 @@ If a budget is reached, record the omitted path and why it was lower priority. A
 Use separate packets for the always-on reviewers:
 
 - **Behavior:** changed control flow, success/failure paths, inputs, retries, state transitions, and external effects.
+- **Reachability and defense proportionality:** value origins, supported UI and non-UI entry paths, caller/type/schema preconditions, duplicate validation layers, fallbacks, exception handling, stale data, and race conditions.
 - **Security:** trust boundaries, identity, authorization, validation, secrets, sensitive data, code/data interpretation, and unsafe sinks.
 - **Performance:** data volume, repeated work, I/O, query behavior, caching, retries, concurrency, memory, and hot paths.
 - **Readability:** complete changed symbols, their local control flow and state changes, meaningful call boundaries, and the maintenance consequence of confusing or tangled code.
 - **Architecture:** responsibilities, dependency direction, change propagation, duplication, abstraction boundaries, and test seams.
 - **Semantic model:** new or renamed symbols, domain vocabulary, state/role/entity distinctions, constructors, factories, and all relevant call sites.
 - **Test quality, conditional:** changed test files, specs, fixtures, mocks, helpers, the minimum public contract under test, and neighboring tests.
+- **Public contract compatibility, conditional:** changed API/export, CLI, settings/schema, storage, or plugin/hook contracts; in-repository consumers; declared external contracts; old-data reads and migrations; and replacement/transition paths.
+- **UI accessibility, conditional:** changed controls and states, keyboard/focus paths, dialogs, field errors, dynamic announcements, color meaning, and reduced-motion behavior relevant to the diff.
 - **Dependency candidates, conditional:** changed production logic, local dependency and utility inventory, capability-relevant imports and symbols, and broad ecosystem search results. Do not limit the packet to installed packages.
 - **Ecosystem adoption, conditional:** introduced or newly used framework/library/plugin, relevant manifest and lockfile entries, framework configuration, runtime target, companion integrations, and version/peer-dependency context.
 
