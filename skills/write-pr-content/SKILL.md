@@ -17,11 +17,16 @@ skill that matches the evidence available for the change:
   RFCs, or articles actually used as references.
 - [benchmark-results](benchmark-results/SKILL.md) — measured performance
   results for a performance change.
-- [visual-evidence](visual-evidence/SKILL.md) — captured before/after UI
-  evidence when an isolated browser environment is available.
+- [visual-evidence](visual-evidence/SKILL.md) — UI changes; the child assesses
+  available capture capabilities and returns either evidence or a concise
+  missing-capability status.
 - [bug-reproduction](bug-reproduction/SKILL.md) — evidence-backed reproduction
   steps reconstructed for an underspecified bug report.
 
-Each child decides independently whether its trigger is satisfied and returns
-`None` otherwise. Do not combine the child outputs here or use this index to
-fill human-authored PR sections such as Abstract, Description, or Issues.
+Each child decides independently whether its task applies. Invoke
+`visual-evidence` for UI changes and let it assess whether the available tools
+can produce the evidence; it returns `None` when the change is not a UI change,
+and reports a missing capability when it applies but evidence cannot be
+produced. Other children return `None` when their task does not apply. Do not
+combine the child outputs here or use this index to fill human-authored PR
+sections such as Abstract, Description, or Issues.
