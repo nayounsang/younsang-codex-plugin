@@ -1,6 +1,6 @@
 ---
 name: visual-evidence
-description: Add a pull request Markdown screenshot fragment for a UI change when the current environment can access, capture, inspect, and save the target UI.
+description: Add a pull request Markdown screenshot fragment for a UI change, or report which capability is missing when evidence cannot be captured.
 ---
 
 # Visual Evidence
