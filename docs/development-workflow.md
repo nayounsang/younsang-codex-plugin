@@ -1,5 +1,7 @@
 # 개발 워크플로우
 
+## 작업 과정
+
 1. 작업을 시작하기 전에 현재 브랜치와 worktree 상태를 확인한다.
 
 2. 원격 `main`을 최신 상태로 동기화한 뒤, 작업 목적을 설명하는 전용
@@ -37,3 +39,23 @@
 8. marketplace를 사용하는 경우 marketplace 파일을 직접 편집하지 않고,
    `plugin-creator`가 제공하는 scaffold/update 흐름을 사용한다. 플러그인
    manifest나 스킬 구조가 바뀌면 새 Codex thread에서 동작을 확인한다.
+
+## 릴리즈
+
+Release Please는 `main`에 병합된 Conventional Commit 메시지를 바탕으로 버전을
+정하고 changelog를 갱신하는 릴리즈 PR을 만든다. 릴리즈 PR을 병합하면 태그와
+GitHub Release가 생성된다. prefix에 따른 버전 변경은 다음과 같다.
+
+| 커밋 prefix | 버전 변경 | 예시 |
+| --- | --- | --- |
+| `feat:` | minor | `feat: add prompt filters` |
+| `fix:`, `perf:`, `revert:` | patch | `fix: handle empty queue` |
+| 모든 prefix 뒤의 `!` (breaking change) | major | `feat!: change queue format` |
+| `docs:`, `style:`, `refactor:`, `test:`, `build:`, `ci:`, `chore:` | 버전 변경 없음 | `docs: clarify release process` |
+
+## PR 생성
+
+- PR 제목은 GitHub Actions로 검증된다. `feat: 작업 내용` 형식으로 작성한다.
+- 가능한 prefix는 [여기](../.github/workflows/pr-title.yml)의 types에서 확인할 수 있다.
+- scope를 쓰면 `feat(scope): 작업 내용` 형식으로 작성한다. breaking change는
+  `feat!:` 또는 `feat(scope)!:`처럼 `!`로 표시한다.
