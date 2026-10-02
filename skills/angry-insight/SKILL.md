@@ -1,9 +1,16 @@
 ---
 name: angry-insight
-description: Analyze newly collected prompts for dissatisfaction with Codex responses and research ways to prevent confirmed mistakes from recurring.
+description: Run only when the user explicitly invokes `$angry-insight`. Do not activate this skill because a message expresses frustration, discusses Angry Insight, or mentions previous prompts.
 ---
 
 # Angry Insight
+
+## Invocation Gate
+
+- Run this workflow only when the user explicitly invokes `$angry-insight`.
+- Do not infer invocation from frustration, complaints about a Codex response, questions about this feature, or requests that merely mention previous prompts.
+- If the user asks how Angry Insight works or what its helper does, explain it without listing, inspecting, classifying, finishing, clearing, or otherwise changing queued data.
+- Before explicit invocation, do not analyze or save cases and do not run queue commands. The trusted capture hook continues to collect submitted prompts as configured; this is separate from activating this skill.
 
 Analyze only prompts newly collected in the project where Codex is running. The trusted `UserPromptSubmit` hook stores each prompt in a project-scoped local queue. The hook does not call a model or connect to an external service.
 
@@ -39,7 +46,7 @@ Entries from earlier versions are moved into the new project-scoped directory at
    }
    ```
 
-   Pass this JSON to `python3 "<helper path>" --data-dir "<data directory>" finish <event_id> complaint`. The helper atomically saves the case before deleting the original prompt and conversation-history path. Do not include the original prompt, conversation-history contents or path, session ID, or turn ID in the JSON.
+   Pass this JSON to `python3 "<helper path>" --data-dir "<data directory>" finish <event_id> complaint`. The helper atomically saves the case before removing the pending queue entry. It does not delete the Codex conversation-history file. Do not include the original prompt, conversation-history contents or path, session ID, or turn ID in the JSON.
 9. If classification, research, or case creation fails, do not run `finish`. Leave the record queued for retry until it expires after 30 days. Report the failure without exposing the original prompt.
 10. Report only complaint cases analyzed in this run. Do not list older case files, re-evaluate past classifications, or infer recurring patterns. If there are no complaint cases, say so.
 
