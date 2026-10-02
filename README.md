@@ -22,6 +22,12 @@ codex plugin add younsang-codex-plugin@younsang-codex-plugins
 
 설치 후 새 Codex thread를 시작하면 플러그인의 스킬을 사용할 수 있습니다.
 
+이후 업데이트시 다음 명령어를 실행해주세요.
+
+```bash
+codex plugin marketplace upgrade younsang-codex-plugins
+```
+
 ## 프로젝트 범위로 설치
 
 특정 프로젝트에서만 플러그인을 사용하려면 대상 프로젝트에 로컬 marketplace 항목을 추가합니다.
