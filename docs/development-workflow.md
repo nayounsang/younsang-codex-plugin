@@ -56,6 +56,6 @@ GitHub Release가 생성된다. prefix에 따른 버전 변경은 다음과 같�
 ## PR 생성
 
 - PR 제목은 GitHub Actions로 검증된다. `feat: 작업 내용` 형식으로 작성한다.
-- 가능한 prefix는 [여기](.github/workflows/pr-title.yml)의 types에서 확인할 수 있다.
+- 가능한 prefix는 [여기](../.github/workflows/pr-title.yml)의 types에서 확인할 수 있다.
 - scope를 쓰면 `feat(scope): 작업 내용` 형식으로 작성한다. breaking change는
   `feat!:` 또는 `feat(scope)!:`처럼 `!`로 표시한다.
