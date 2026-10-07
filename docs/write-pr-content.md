@@ -9,7 +9,7 @@
 | [`change-diagram`](../skills/write-pr-content/change-diagram/SKILL.md) | 명시적 대상 또는 시각화할 외부 동작이 있을 때 | 새 기능은 After 1개, 기능 변경·버그 수정은 Before/After 2개 다이어그램 | Mermaid fenced block으로 반환하며 내부 helper 호출은 표시하지 않습니다. |
 | [`reference-links`](../skills/write-pr-content/reference-links/SKILL.md) | PR에 직접 링크된 이슈 외에 작업 중 참고한 외부 자료가 있을 때 | 근거가 드러나는 링크 목록 | - |
 | [`benchmark-results`](../skills/write-pr-content/benchmark-results/SKILL.md) | 성능 변경 의도와 benchmark 입력이 있을 때 | 측정 Environment와 Benchmark 결과를 나타내는 Markdown 표 | 측정 대상에 영향을 주는 소프트웨어, 의존성, 물리적 환경 등 영향가는 것만 기록하고 측정 결과 표를 작성합니다. |
-| [`visual-evidence`](../skills/write-pr-content/visual-evidence/SKILL.md) | UI 변경작업일 때 | After 또는 Before/After 캡처, 또는 누락된 기능을 설명하는 상태 메시지 | 실행 전에 현재 노출된 도구로 캡처 경로를 평가합니다. 도구 존재만으로 가능하다고 보지 않으며, 캡처·확인·저장이 불가능하면 필요한 기능과 이유를 설명하고 임의로 도구를 설치하지 않습니다. Before는 사용자 제공 artifact를 받을 수 있고 없다면 작업 이전 코드베이스에서 얻도록 합니다. |
+| [`visual-evidence`](../skills/write-pr-content/visual-evidence/SKILL.md) | UI 변경작업일 때 | After 또는 Before/After 캡처, 또는 누락된 기능을 설명하는 상태 메시지 | 실행 전에 현재 노출된 도구로 캡처 경로를 평가합니다. 도구 존재만으로 가능하다고 보지 않으며, 캡처·확인·저장이 불가능하면 필요한 기능과 이유를 설명하고 임의로 도구를 설치하지 않습니다. Before는 사용자 제공 artifact를 받을 수 있고 없다면 작업 이전 코드베이스에서 얻도록 합니다. 캡처가 있는 임시 worktree는 업로드를 완료하고 URL을 확인한 뒤 캡처와 함께 정리합니다. |
 | [`bug-reproduction`](../skills/write-pr-content/bug-reproduction/SKILL.md) | 버그 재현 정보가 부족하지만 테스트·명령·diff에서 복원할 근거가 있을 때 | 재현 절차 fragment | - |
 
 ## 사용 예시
