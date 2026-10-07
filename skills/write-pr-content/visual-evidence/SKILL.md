@@ -70,7 +70,9 @@ For a UI change or bug fix, obtain the `Before` state in this order:
    original branch and verify the recorded HEAD and clean status.
 3. If the current worktree is dirty or cannot be safely restored, create a
    detached temporary worktree at the pre-change revision and run the same
-   capture workflow there. Remove the temporary worktree after capture.
+   capture workflow there. Keep the temporary worktree until screenshots from
+   it have been uploaded and their hosted URLs verified. Then remove the
+   temporary worktree and any no-longer-needed capture files together.
 4. If none of these paths produces a valid `Before` capture, do not claim a
    Before/After comparison. Explain that the required `Before` artifact could
    not be captured and which capability or safe path was unavailable.
@@ -100,9 +102,10 @@ and verify it. If neither route works, report the missing upload capability
 and do not return local paths as PR image links. Do not create or edit a PR
 solely to upload evidence. If no target PR exists or the user has not authorized
 creating or updating one, explain that the fragment needs an authorized PR
-upload step; do not emit local-path links. Delete temporary captures after
-successful upload and verification when they are no longer needed; never stage
-or commit screenshots.
+upload step; do not emit local-path links. Keep any temporary worktree and its
+captures until upload succeeds and every hosted URL is verified. Then remove
+the temporary worktree and no-longer-needed capture files in one cleanup step;
+never stage or commit screenshots.
 
 Include a video only when the user supplied a file or URL, and keep that
 optional video link separate from screenshot rows. Do not create or imply a

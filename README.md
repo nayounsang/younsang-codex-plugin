@@ -97,6 +97,8 @@ Codex의 기존 빌트인 리뷰 스킬을 확장해 깊고 다양한 관점에�
 
 - 기능 변경 명세, 외부 동작 다이어그램, 참고 링크, benchmark, UI 캡처,
   버그 재현 절차 중 필요한 것을 얻기 위한 독립적인 하위 스킬로 제공합니다.
+- UI 캡처는 GitHub 업로드와 hosted URL 확인을 마친 뒤 임시 worktree 및
+  캡처 파일을 함께 정리합니다.
 - 자세한 것은 [`docs/write-pr-content.md`](docs/write-pr-content.md)를 참고하세요.
 
 ### [codex-complex-prompt](https://github.com/nayounsang/codex-complex-prompt)
