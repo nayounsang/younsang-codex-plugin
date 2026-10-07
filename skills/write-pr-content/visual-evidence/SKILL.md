@@ -25,17 +25,22 @@ chosen route, verify that it can:
   read as a file;
 - when it saves a file, write the image to the required location and make that
   file readable from the current work environment;
+- upload the image to the target pull request and obtain the hosted image URL
+  that the PR Markdown must use;
 - when the task requires it, isolate the browser or app session, select the
   correct target, and reset or close it afterward.
 
 Treat capture as available only when the route satisfies the needs of this
-task, including a real image artifact that can be verified and saved at an
-exact repository-relative path. If the task is not a UI change, return exactly
-`None`. If it is a UI change but no exposed route can produce and verify the
-required artifact, do not install or configure tools automatically. Explain
-which capability is missing and why it is needed; do not report `None` as if a
-capture attempt succeeded, and never claim a screenshot or path exists when it
-does not. In this case, return a concise status message instead of a PR
+task, including a real image artifact that can be verified and uploaded to the
+target pull request. Save captures wherever is convenient, as long as the file
+is readable for upload. Do not add screenshots to Git, even if a
+repository-relative path would make the Markdown render locally. If the task
+is not a UI change, return exactly `None`. If it is a UI change but no exposed
+route can produce and verify the required artifact, do not install or configure
+tools automatically.
+Explain which capability is missing and why it is needed; do not report `None`
+as if a capture attempt succeeded, and never claim a screenshot or path exists
+when it does not. In this case, return a concise status message instead of a PR
 artifact fragment.
 
 Read the changed repository's `AGENTS.md` before operating its UI. Follow its
@@ -56,6 +61,7 @@ For a UI change or bug fix, obtain the `Before` state in this order:
 
 1. Use a matching user-provided local `Before` artifact when one exists. It
    must describe the same target and state; do not relabel an unrelated image.
+   Use the supplied file directly for upload when it is readable.
 2. If no artifact was provided and the current worktree is clean, resolve the
    pre-change revision from the PR base and the current HEAD, record the
    current branch, HEAD, and status, stop the running app, and temporarily
@@ -81,30 +87,44 @@ the fragment. The missing-capability status message described above is the
 exception.
 
 Capture an `After` image for a new UI feature. Capture both `Before` and
-`After` images for a UI change or UI bug fix. Screenshot and image artifacts
-must use exact repository-relative local paths produced by the capture
-workflow; do not use a URL as an image artifact path. Include a video only
-when the user supplied a file or URL, and keep that optional video link in a
-separate field from screenshot artifact paths. Do not create or imply a video
-otherwise. Verify the relevant state before capturing and reset or close the
-isolated target session according to the repository workflow. Do not invent behavior,
-links, numbers, screenshots, or reproduction steps. Do not copy the full PR
-template.
+`After` images for a UI change or UI bug fix. When the task authorizes creating
+or updating a PR, upload screenshots from their local paths with
+[`gh pr create --attach`](https://cli.github.com/manual/gh_pr_create) or
+[`gh pr edit --attach`](https://cli.github.com/manual/gh_pr_edit). Put each
+local filename in the Markdown image reference supplied to that command;
+GitHub CLI uploads the file and rewrites that reference to the hosted
+attachment URL. Confirm the rewritten URL is present before returning the
+fragment. If GitHub CLI is unavailable or cannot upload the file, use the
+target PR's browser attachment flow when an exposed browser tool can complete
+and verify it. If neither route works, report the missing upload capability
+and do not return local paths as PR image links. Do not create or edit a PR
+solely to upload evidence. If no target PR exists or the user has not authorized
+creating or updating one, explain that the fragment needs an authorized PR
+upload step; do not emit local-path links. Delete temporary captures after
+successful upload and verification when they are no longer needed; never stage
+or commit screenshots.
 
-Print the exact repository-relative path for every captured screenshot or image
-artifact, and use that same path in the Markdown link. Do not print a planned
-path for a file that was not created. Include the path in the fragment so a
-reviewer can find the source file even when the rendered image is unavailable.
+Include a video only when the user supplied a file or URL, and keep that
+optional video link separate from screenshot rows. Do not create or imply a
+video otherwise. Verify the relevant state before capturing and reset or close
+the isolated target session according to the repository workflow. Do not invent
+behavior, links, numbers, screenshots, or reproduction steps. Do not copy the
+full PR template.
 
-Response format (shape only; replace placeholders with real captures and exact
-paths):
+Use the hosted GitHub attachment URL in every Markdown image link. Never put
+an absolute local path, a repository-relative capture path, or a temporary file
+path in the final PR fragment. Do not print a planned URL or claim an upload
+succeeded before verifying the returned hosted URL.
+
+Response format (shape only; replace placeholders with real captures and hosted
+attachment URLs):
 
 ```markdown
 ## Visual Evidence
 
-| State | Tool and target | Screenshot | Local artifact path |
+| State | Tool and target | Screenshot | Upload |
 | --- | --- | --- | --- |
-| After | `<tool name(s) and target>` | ![After](<repo-relative-after-path.png>) | `<repo-relative-after-path.png>` |
+| After | `<tool name(s) and target>` | ![After](<github-hosted-attachment-url>) | Uploaded via `gh pr create/edit --attach` or browser |
 
 | Optional user-provided video | Link |
 | --- | --- |
@@ -112,8 +132,6 @@ paths):
 ```
 
 For a UI change or bug fix, use the same format with `Before` and `After` rows.
-For a new UI feature, include only the `After` row. The path must be the
-actual local output from the capture tool, for example
-`artifacts/pr-visual-evidence/<change-id>/after.png`, not a guessed path. A
-user-provided video URL is allowed only in the separate optional video field;
-it is not a screenshot artifact path.
+For a new UI feature, include only the `After` row. The image link must use
+the actual hosted attachment URL returned after upload. A user-provided video
+URL is allowed only in the separate optional video field.
