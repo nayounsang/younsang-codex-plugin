@@ -123,6 +123,7 @@ Codex가 더 이상 바보같은 행동을 하지 말도록 유효한 잡도리�
 빡침을 표현하고 멋진 Agent로 직접 만들어보세요. ~~AI Agent 교육들을 필요가 없어질수도~~ 
 
 - Codex에 보낸 프롬프트를 로컬에 수집합니다. 이 프롬프트들을 분석해 불만 사례 데이터를 얻습니다.
+- 분석은 사용자가 `$angry-insight`를 명시적으로 실행할 때 시작됩니다.
 - 사례에 맞는 자료(Codex·Anthropic 공식 자료, Hacker News, GitHub, npm 등)를 조사해 해결책과 실행 가이드를 제안합니다. 적용 가능한 기존 해결책이 없으면 AI 생성 아이디어로 표시합니다.
 - 자세한 것은 [`docs/angry-insight.md`](docs/angry-insight.md)를 참고하세요.
 
