@@ -22,6 +22,12 @@ codex plugin add younsang-codex-plugin@younsang-codex-plugins
 
 설치 후 새 Codex thread를 시작하면 플러그인의 스킬을 사용할 수 있습니다.
 
+이후 업데이트시 다음 명령어를 실행해주세요.
+
+```bash
+codex plugin marketplace upgrade younsang-codex-plugins
+```
+
 ## 프로젝트 범위로 설치
 
 특정 프로젝트에서만 플러그인을 사용하려면 대상 프로젝트에 로컬 marketplace 항목을 추가합니다.
@@ -115,7 +121,8 @@ Codex가 더 이상 바보같은 행동을 하지 말도록 유효한 잡도리�
 빡침을 표현하고 멋진 Agent로 직접 만들어보세요. ~~AI Agent 교육들을 필요가 없어질수도~~ 
 
 - Codex에 보낸 프롬프트를 로컬에 수집합니다. 이 프롬프트들을 분석해 불만 사례 데이터를 얻습니다.
-- 여러 레퍼런스(Codex, Hacker News, GitHub 등)에서 불만 사례별로 재발하지 않을 해결책과 실행 가이드를 제안합니다.
+- 분석은 사용자가 `$angry-insight`를 명시적으로 실행할 때 시작됩니다.
+- 사례에 맞는 자료(Codex·Anthropic 공식 자료, Hacker News, GitHub, npm 등)를 조사해 해결책과 실행 가이드를 제안합니다. 적용 가능한 기존 해결책이 없으면 AI 생성 아이디어로 표시합니다.
 - 자세한 것은 [`docs/angry-insight.md`](docs/angry-insight.md)를 참고하세요.
 
 ## 추천 외부 도구
