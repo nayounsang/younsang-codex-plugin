@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0](https://github.com/nayounsang/younsang-codex-plugin/compare/v0.1.2...v0.2.0) (2026-10-08)
+
+
+### Features
+
+* **skill-evaluation:** add skill evaluation workflow ([#33](https://github.com/nayounsang/younsang-codex-plugin/issues/33)) ([4f3c8ee](https://github.com/nayounsang/younsang-codex-plugin/commit/4f3c8ee3f1d15d4b3eeb1d1aa88c5dfe236e05e6))
+
+
+### Bug Fixes
+
+* **angry-insight:** require explicit skill invocation ([#24](https://github.com/nayounsang/younsang-codex-plugin/issues/24)) ([971f5f8](https://github.com/nayounsang/younsang-codex-plugin/commit/971f5f8af3d3d6085f80755f8c9ebdb936a03b4d))
+* **visual-evidence:** upload screenshots to GitHub ([#31](https://github.com/nayounsang/younsang-codex-plugin/issues/31)) ([595ee7c](https://github.com/nayounsang/younsang-codex-plugin/commit/595ee7c7183ca82ce6821f242e51b005001cdf2c))
+
 ## [0.1.2](https://github.com/nayounsang/younsang-codex-plugin/compare/v0.1.1...v0.1.2) (2026-10-03)
 
 
