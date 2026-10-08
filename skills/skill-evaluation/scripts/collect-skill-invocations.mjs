@@ -229,6 +229,23 @@ function requestBudgetStop(reason) {
   forceKillTimer = setTimeout(() => child.kill('SIGKILL'), 2_000);
   forceKillTimer.unref();
 }
+function observeExecutionLine(line) {
+  try {
+    const event = JSON.parse(line);
+    if (event.type !== 'turn.completed') return;
+    const inputTokens = event.usage?.input_tokens;
+    const outputTokens = event.usage?.output_tokens;
+    if (!Number.isSafeInteger(inputTokens) || !Number.isSafeInteger(outputTokens)) {
+      requestBudgetStop('token_usage_unavailable');
+      return;
+    }
+    tokenUsageEventCount += 1;
+    tokenUsage += inputTokens + outputTokens;
+    if (tokenUsage >= options.maxTokens) requestBudgetStop('token_budget_reached');
+  } catch {
+    // Ignore non-JSON stdout lines; --json output is parsed when it is valid.
+  }
+}
 
 for (const signal of ['SIGINT', 'SIGTERM']) {
   process.once(signal, () => {
@@ -267,21 +284,7 @@ try {
     while ((newlineIndex = outputBuffer.indexOf('\n')) >= 0) {
       const line = outputBuffer.slice(0, newlineIndex);
       outputBuffer = outputBuffer.slice(newlineIndex + 1);
-      try {
-        const event = JSON.parse(line);
-        if (event.type !== 'turn.completed') continue;
-        const inputTokens = event.usage?.input_tokens;
-        const outputTokens = event.usage?.output_tokens;
-        if (!Number.isSafeInteger(inputTokens) || !Number.isSafeInteger(outputTokens)) {
-          requestBudgetStop('token_usage_unavailable');
-          continue;
-        }
-        tokenUsageEventCount += 1;
-        tokenUsage += inputTokens + outputTokens;
-        if (tokenUsage >= options.maxTokens) requestBudgetStop('token_budget_reached');
-      } catch {
-        // Ignore non-JSON stdout lines; --json output is parsed when it is valid.
-      }
+      observeExecutionLine(line);
     }
   });
 
@@ -294,6 +297,7 @@ try {
   clearTimeout(timeoutTimer);
   clearTimeout(forceKillTimer);
   outputBuffer += stdoutDecoder.end();
+  if (outputBuffer.trim()) observeExecutionLine(outputBuffer);
 
   await closeServer();
   await endStream(output);
