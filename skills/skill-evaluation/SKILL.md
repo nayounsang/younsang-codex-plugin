@@ -48,6 +48,8 @@ Format the proposed plan as Markdown:
 
 Include each criterion's basis, complete case prompts and expected routing/outcomes, model and permission conditions, repetitions, concrete budget/time limits, a persistent artifact location separate from disposable run workspaces, cleanup plan, and side effects in the relevant lists. Identify the active model provider, exact endpoint/base URL, and model ID, and state which case prompts, fixture/source files, and tool outputs may be sent to that provider. Do not copy or transmit credentials or unrelated user data. If the provider, endpoint, or data scope cannot be determined, say so and do not run until the user resolves it. Do not make the user prepare Codex itself. Keep disputed expectations unresolved and exclude them from scoring. After any correction request, show the revised final plan and wait for explicit approval; feedback alone is not approval. Do not execute any evaluation case before approval.
 
+Treat the approved time limit as a hard wall-clock deadline for the full run set. Before each collector invocation, pass the remaining milliseconds using `--timeout-ms`; the collector terminates the Codex child when the deadline expires. Pass the remaining token threshold using `--max-tokens` and subtract the reported usage after each run. Codex reports usage at completed-turn boundaries, so the final turn may exceed the threshold; state this possible overrun in the plan. If a run does not report token usage, stop the run set and mark budget enforcement unverified rather than starting more cases.
+
 ### 3. Prepare Codex runs
 
 Before presenting the plan, confirm that Codex CLI, Node.js, and a writable artifact path are available. The bundled [local telemetry collector](scripts/collect-skill-invocations.mjs) starts a loopback-only OTLP/HTTP JSON server for each Codex run, passes its endpoint through per-process `codex -c` overrides, and stores only `codex.skill_invocation` records plus a summary. It does not require an npm package or a user-wide Codex telemetry configuration. It disables trace and metrics exporters for the child process. Other OTLP log records are parsed in memory and discarded.
@@ -59,6 +61,8 @@ node /absolute/path/to/skill-evaluation/scripts/collect-skill-invocations.mjs \
   --target-skill skill-name \
   --run-id case-01-rep-01 \
   --cwd /path/to/fresh/workspace/case-01-rep-01 \
+  --timeout-ms 1800000 \
+  --max-tokens 100000 \
   --exec-jsonl /path/to/artifacts/case-01-rep-01/codex-execution.jsonl \
   --output /path/to/artifacts/case-01-rep-01/skill-invocations.jsonl \
   -- codex exec --json "<approved case prompt>"
@@ -66,7 +70,7 @@ node /absolute/path/to/skill-evaluation/scripts/collect-skill-invocations.mjs \
 
 Before model runs, use a bounded approved preflight to confirm this Codex version emits the target skill event and that the collector receives valid OTLP records. The collector summary separates OTLP receipt from whether a target invocation event was observed, and labels invocation detection `best_effort`. No target event is not proof of non-invocation: classify it as `unverified` unless event coverage for the tested invocation mode is known to be reliable. A received non-skill OTLP record alone does not establish routing evidence. If Codex, Node.js, the event, or the local collector is unavailable, do not install a substitute or call a raw model/API response an end-to-end Codex evaluation. Explain which capability is missing and continue only with requested static analysis and case design.
 
-After the user approves the cases, preflight Codex execution, permissions, and artifact paths. If a required capability or permission is unavailable, stop before model runs and explain which capability is missing. Before execution, validate the approved case data and fixture paths, verify the temporary workspace is distinct from the target/source workspace and persistent artifact directory, and confirm the cleanup procedure. Run a small approved case first if the plan includes a safe preflight; stop if setup, isolation, telemetry capture, or result collection does not work.
+After the user approves the cases, preflight Codex execution, permissions, usage reporting, and artifact paths. If token usage is unavailable in the preflight, do not start the evaluation run set. If another required capability or permission is unavailable, stop before model runs and explain which capability is missing. Before execution, validate the approved case data and fixture paths, verify the temporary workspace is distinct from the target/source workspace and persistent artifact directory, and confirm the cleanup procedure. For each run, pass the remaining approved time and token thresholds to the collector; do not start another run after either limit is reached. Run a small approved case first if the plan includes a safe preflight; stop if setup, isolation, telemetry capture, or result collection does not work.
 
 ### 4. Execute paired, isolated cases
 
@@ -91,4 +95,4 @@ Report the trigger results and task results separately using [report format](ref
 
 ## Failure handling
 
-If invocation, evaluation, aggregation, schema validation, telemetry collection, or cleanup fails, do not print a success rate for the affected set. Treat unobserved target events as `unverified` when best-effort telemetry cannot establish absence. Report the failure point and evidence, keep unaffected results clearly scoped, and state which cases need rerunning. A static review or a draft case set is not a dynamic evaluation result.
+If invocation, evaluation, aggregation, schema validation, telemetry collection, budget enforcement, or cleanup fails, do not print a success rate for the affected set. Treat unobserved target events as `unverified` when best-effort telemetry cannot establish absence. Treat a missing usage event or a time/token stop as failed or unverified, and report any final-turn token overrun. Report the failure point and evidence, keep unaffected results clearly scoped, and state which cases need rerunning. A static review or a draft case set is not a dynamic evaluation result.

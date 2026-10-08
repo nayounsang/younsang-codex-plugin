@@ -5,6 +5,7 @@ import { mkdir } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { basename, dirname, resolve } from 'node:path';
 import { createServer } from 'node:http';
+import { StringDecoder } from 'node:string_decoder';
 
 const MAX_BODY_BYTES = 16 * 1024 * 1024;
 const OTEL_CONFIG = [
@@ -17,7 +18,7 @@ const OTEL_CONFIG = [
 
 function usage() {
   console.error(
-    'Usage: node collect-skill-invocations.mjs --target-skill <name> --run-id <id> --cwd <workspace> --exec-jsonl <file.jsonl> --output <file.jsonl> -- codex exec --json ...',
+    'Usage: node collect-skill-invocations.mjs --target-skill <name> --run-id <id> --cwd <workspace> --timeout-ms <ms> --max-tokens <count> --exec-jsonl <file.jsonl> --output <file.jsonl> -- codex exec --json ...',
   );
   process.exit(2);
 }
@@ -29,7 +30,7 @@ function parseArgs(argv) {
   const options = {};
   for (let index = 0; index < separator; index += 1) {
     const key = argv[index];
-    if (!['--target-skill', '--run-id', '--cwd', '--exec-jsonl', '--output'].includes(key)) usage();
+    if (!['--target-skill', '--run-id', '--cwd', '--timeout-ms', '--max-tokens', '--exec-jsonl', '--output'].includes(key)) usage();
     const value = argv[index + 1];
     if (!value || value.startsWith('--')) usage();
     options[key.slice(2).replaceAll('-', '')] = value;
@@ -38,7 +39,10 @@ function parseArgs(argv) {
 
   const command = argv[separator + 1];
   const commandArgs = argv.slice(separator + 2);
-  if (!options.targetskill || !options.runid || !options.cwd || !options.execjsonl || !options.output || !command) usage();
+  if (!options.targetskill || !options.runid || !options.cwd || !options.timeoutms || !options.maxtokens || !options.execjsonl || !options.output || !command) usage();
+  const timeoutMs = Number(options.timeoutms);
+  const maxTokens = Number(options.maxtokens);
+  if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 2_147_483_647 || !Number.isSafeInteger(maxTokens) || maxTokens < 1) usage();
   if (basename(command).toLowerCase().replace(/\.(cmd|exe)$/u, '') !== 'codex') {
     console.error('The command after -- must be the Codex CLI executable.');
     process.exit(2);
@@ -48,6 +52,8 @@ function parseArgs(argv) {
     targetSkill: options.targetskill,
     runId: options.runid,
     cwd: resolve(options.cwd),
+    timeoutMs,
+    maxTokens,
     execJsonlPath: resolve(options.execjsonl),
     outputPath: resolve(options.output),
     command,
@@ -209,6 +215,21 @@ function endStream(stream) {
 
 let child;
 let interrupted = false;
+let budgetStopReason;
+let tokenUsage = 0;
+let tokenUsageEventCount = 0;
+let outputBuffer = '';
+const stdoutDecoder = new StringDecoder('utf8');
+let forceKillTimer;
+let timeoutTimer;
+function requestBudgetStop(reason) {
+  if (budgetStopReason || !child || child.exitCode !== null) return;
+  budgetStopReason = reason;
+  child.kill('SIGTERM');
+  forceKillTimer = setTimeout(() => child.kill('SIGKILL'), 2_000);
+  forceKillTimer.unref();
+}
+
 for (const signal of ['SIGINT', 'SIGTERM']) {
   process.once(signal, () => {
     interrupted = true;
@@ -229,6 +250,7 @@ try {
     ...OTEL_CONFIG.flatMap((config) => ['-c', config]),
   ];
 
+  const startedAt = Date.now();
   child = spawn(options.command, [...configArgs, ...options.commandArgs], {
     stdio: ['inherit', 'pipe', 'inherit'],
     env: process.env,
@@ -240,12 +262,38 @@ try {
       execJsonl.once('drain', () => child.stdout.resume());
     }
     process.stdout.write(chunk);
+    outputBuffer += stdoutDecoder.write(chunk);
+    let newlineIndex;
+    while ((newlineIndex = outputBuffer.indexOf('\n')) >= 0) {
+      const line = outputBuffer.slice(0, newlineIndex);
+      outputBuffer = outputBuffer.slice(newlineIndex + 1);
+      try {
+        const event = JSON.parse(line);
+        if (event.type !== 'turn.completed') continue;
+        const inputTokens = event.usage?.input_tokens;
+        const outputTokens = event.usage?.output_tokens;
+        if (!Number.isSafeInteger(inputTokens) || !Number.isSafeInteger(outputTokens)) {
+          requestBudgetStop('token_usage_unavailable');
+          continue;
+        }
+        tokenUsageEventCount += 1;
+        tokenUsage += inputTokens + outputTokens;
+        if (tokenUsage >= options.maxTokens) requestBudgetStop('token_budget_reached');
+      } catch {
+        // Ignore non-JSON stdout lines; --json output is parsed when it is valid.
+      }
+    }
   });
+
+  timeoutTimer = setTimeout(() => requestBudgetStop('timeout'), options.timeoutMs);
 
   const childExit = await new Promise((resolveExit, rejectSpawn) => {
     child.once('error', rejectSpawn);
     child.once('close', (code, signal) => resolveExit({ code, signal }));
   });
+  clearTimeout(timeoutTimer);
+  clearTimeout(forceKillTimer);
+  outputBuffer += stdoutDecoder.end();
 
   await closeServer();
   await endStream(output);
@@ -255,6 +303,13 @@ try {
     target_skill: options.targetSkill,
     codex_exit_code: childExit.code,
     codex_signal: childExit.signal,
+    elapsed_ms: Date.now() - startedAt,
+    timeout_ms: options.timeoutMs,
+    stop_reason: budgetStopReason ?? null,
+    token_budget: options.maxTokens,
+    token_usage: tokenUsage,
+    token_usage_event_count: tokenUsageEventCount,
+    token_usage_available: tokenUsageEventCount > 0,
     otlp_request_count: requestCount,
     received_log_record_count: receivedRecordCount,
     rejected_request_count: rejectedRequestCount,
@@ -276,8 +331,11 @@ try {
   });
 
   if (outputError) throw outputError;
-  if (childExit.code !== 0 || interrupted) process.exitCode = childExit.code ?? 1;
+  if (budgetStopReason) process.exitCode = budgetStopReason === 'timeout' ? 124 : 125;
+  else if (childExit.code !== 0 || interrupted) process.exitCode = childExit.code ?? 1;
 } catch (error) {
+  clearTimeout(timeoutTimer);
+  clearTimeout(forceKillTimer);
   await closeServer().catch(() => {});
   await endStream(output).catch(() => {});
   await endStream(execJsonl).catch(() => {});
