@@ -59,6 +59,7 @@ node skills/skill-evaluation/scripts/collect-skill-invocations.mjs \
   --target-skill skill-name \
   --run-id case-01-rep-01 \
   --cwd /path/to/fresh/workspace/case-01-rep-01 \
+  --exec-jsonl /path/to/artifacts/case-01-rep-01/codex-execution.jsonl \
   --output /path/to/artifacts/case-01-rep-01/skill-invocations.jsonl \
   -- codex exec --json "<approved case prompt>"
 ```
@@ -78,7 +79,7 @@ For each approved task case, keep prompt, model, tool access, fixture state, per
 
 For a plugin with multiple skills, omit only the target skill in an isolated baseline and keep the rest of the plugin unchanged. Do not copy credentials into the isolated environment. If that environment cannot authenticate or cannot preserve the neighboring skills, use the approved `prompt-suppressed` condition described above, or report the paired comparison unavailable. Give each case and each repetition a fresh workspace so state cannot leak. Record actual model/version, Codex version, configuration, timing, token and tool usage when available, run ID, exit status, execution JSONL, telemetry summary, and artifact paths.
 
-For trigger cases, inspect the collector output for the target skill's `codex.skill_invocation` event. The same file may show other invoked skills as case evidence, but only target-skill invocation determines this skill's binary metric. If the run summary says telemetry was not received, mark routing `unverified`; never infer it from response content or from an empty event file alone. Do not count an explicit `$skill-name` case as an automatic-routing success.
+For trigger cases, inspect the collector output for the target skill's `codex.skill_invocation` event. The same file may show other invoked skills as case evidence, but only target-skill invocation determines this skill's binary metric. Preserve the Codex `--json` stdout in the approved execution JSONL artifact. If the run summary says telemetry was not received, mark routing `unverified`; never infer it from response content or from an empty event file alone. Do not count an explicit `$skill-name` case as an automatic-routing success.
 
 For task cases, check file, command, or state assertions deterministically where possible. Grade semantic assertions only against the user-approved rubric and cite the output and execution evidence for each judgment. Keep the evaluator blind to A/B labels when the runner supports it; otherwise disclose that limitation.
 

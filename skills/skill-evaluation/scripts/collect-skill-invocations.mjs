@@ -17,7 +17,7 @@ const OTEL_CONFIG = [
 
 function usage() {
   console.error(
-    'Usage: node collect-skill-invocations.mjs --target-skill <name> --run-id <id> --cwd <workspace> --output <file.jsonl> -- codex exec --json ...',
+    'Usage: node collect-skill-invocations.mjs --target-skill <name> --run-id <id> --cwd <workspace> --exec-jsonl <file.jsonl> --output <file.jsonl> -- codex exec --json ...',
   );
   process.exit(2);
 }
@@ -29,7 +29,7 @@ function parseArgs(argv) {
   const options = {};
   for (let index = 0; index < separator; index += 1) {
     const key = argv[index];
-    if (!['--target-skill', '--run-id', '--cwd', '--output'].includes(key)) usage();
+    if (!['--target-skill', '--run-id', '--cwd', '--exec-jsonl', '--output'].includes(key)) usage();
     const value = argv[index + 1];
     if (!value || value.startsWith('--')) usage();
     options[key.slice(2).replaceAll('-', '')] = value;
@@ -38,7 +38,7 @@ function parseArgs(argv) {
 
   const command = argv[separator + 1];
   const commandArgs = argv.slice(separator + 2);
-  if (!options.targetskill || !options.runid || !options.cwd || !options.output || !command) usage();
+  if (!options.targetskill || !options.runid || !options.cwd || !options.execjsonl || !options.output || !command) usage();
   if (basename(command).toLowerCase().replace(/\.(cmd|exe)$/u, '') !== 'codex') {
     console.error('The command after -- must be the Codex CLI executable.');
     process.exit(2);
@@ -48,6 +48,7 @@ function parseArgs(argv) {
     targetSkill: options.targetskill,
     runId: options.runid,
     cwd: resolve(options.cwd),
+    execJsonlPath: resolve(options.execjsonl),
     outputPath: resolve(options.output),
     command,
     commandArgs,
@@ -119,9 +120,11 @@ const options = parseArgs(process.argv.slice(2));
 const outputPath = options.outputPath;
 const summaryPath = `${outputPath}.summary.json`;
 await mkdir(dirname(outputPath), { recursive: true });
+await mkdir(dirname(options.execJsonlPath), { recursive: true });
 
 let output;
 let summaryFile;
+let execJsonl;
 function waitForOpen(stream) {
   return new Promise((resolveOpen, rejectOpen) => {
     stream.once('open', resolveOpen);
@@ -132,10 +135,12 @@ function waitForOpen(stream) {
 try {
   output = createWriteStream(outputPath, { flags: 'wx', encoding: 'utf8' });
   summaryFile = createWriteStream(summaryPath, { flags: 'wx', encoding: 'utf8' });
-  await Promise.all([waitForOpen(output), waitForOpen(summaryFile)]);
+  execJsonl = createWriteStream(options.execJsonlPath, { flags: 'wx' });
+  await Promise.all([waitForOpen(output), waitForOpen(summaryFile), waitForOpen(execJsonl)]);
 } catch (error) {
   output?.destroy();
   summaryFile?.destroy();
+  execJsonl?.destroy();
   console.error(`Cannot create telemetry output: ${error.message}`);
   process.exit(2);
 }
@@ -148,6 +153,7 @@ let rejectedRequestCount = 0;
 let outputError;
 output.on('error', (error) => { outputError = error; });
 summaryFile.on('error', (error) => { outputError = error; });
+execJsonl.on('error', (error) => { outputError = error; });
 
 const server = createServer((request, response) => {
   if (request.method !== 'POST' || new URL(request.url, 'http://127.0.0.1').pathname !== '/v1/logs') {
@@ -224,9 +230,16 @@ try {
   ];
 
   child = spawn(options.command, [...configArgs, ...options.commandArgs], {
-    stdio: 'inherit',
+    stdio: ['inherit', 'pipe', 'inherit'],
     env: process.env,
     cwd: options.cwd,
+  });
+  child.stdout.on('data', (chunk) => {
+    if (!execJsonl.write(chunk)) {
+      child.stdout.pause();
+      execJsonl.once('drain', () => child.stdout.resume());
+    }
+    process.stdout.write(chunk);
   });
 
   const childExit = await new Promise((resolveExit, rejectSpawn) => {
@@ -236,6 +249,7 @@ try {
 
   await closeServer();
   await endStream(output);
+  await endStream(execJsonl);
   const summary = {
     run_id: options.runId,
     target_skill: options.targetSkill,
@@ -246,6 +260,7 @@ try {
     rejected_request_count: rejectedRequestCount,
     skill_invocation_event_count: invocationCount,
     target_invocation_event_count: targetInvocationCount,
+    execution_jsonl_path: options.execJsonlPath,
     telemetry_status: rejectedRequestCount > 0
       ? 'invalid_payload'
       : receivedRecordCount > 0
@@ -263,6 +278,7 @@ try {
 } catch (error) {
   await closeServer().catch(() => {});
   await endStream(output).catch(() => {});
+  await endStream(execJsonl).catch(() => {});
   await endStream(summaryFile).catch(() => {});
   console.error(`Skill invocation collection failed: ${error.message}`);
   process.exitCode = 1;
