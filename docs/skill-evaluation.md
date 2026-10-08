@@ -5,13 +5,27 @@
 ## 1. 사용 방법
 
 ```text
-$skill-evaluation skills/api-scenario-forge
+# 이름만 입력
+$skill-evaluation api-scenario-forge
+
+# 레포지토리 스킬
+$skill-evaluation /path/to/project/.agents/skills/api-scenario-forge
+
+# user 스킬
+$skill-evaluation ~/.agents/skills/api-scenario-forge
+
+# plugin 스킬
+$skill-evaluation api-scenario-forge --plugin-id younsang-codex-plugin@younsang-codex-plugins
 ```
 
-- 스킬 이름만 입력해도 되지만, 같은 이름의 스킬이 여러 곳에 있으면 경로를 지정하세요.
-- 실행 기록은 스킬 이름·플러그인 ID·스킬 범위를 함께 대조합니다. 플러그인 ID는 설치 정보에서 확인하고, 스킬 범위는 대상 호출이 예상되는 짧은 사전 실행에서 발견합니다. 로컬 marketplace 플러그인의 ID는 `<플러그인 이름>@<marketplace 이름>` 형식입니다. 플러그인 ID가 모호하거나 이벤트 식별 정보가 없으면 추측하지 않고 오류로 중단합니다.
 - Codex는 평가 계획을 제안합니다. 이 단계에서는 평가를 실행하지 않고 피드백을 주고 받습니다.
 - 계획을 수정한 뒤에는 최종 계획을 다시 보여줍니다. 사용자가 명시적으로 승인한 뒤에만 평가를 실행합니다.
+
+### 입력
+
+- 이름만 입력하면 `repo → user → plugin → system → admin` 순서로 검색해 처음 발견된 스킬을 선택합니다. 같은 범위 안에서 중복되는 이름이 있으면 먼저 발견된 항목을 선택하지만, 발견 순서는 보장하지 않습니다.
+- 정확한 대상을 원하면 일반 스킬은 경로를, 플러그인 스킬은 `--plugin-id <pluginName>@<marketplaceName>`로 입력하세요.
+- 대상 스킬을 찾지 못한다면 오류가 발생합니다.
 
 ## 2. 예시
 

@@ -96,6 +96,7 @@ Codex의 기존 빌트인 리뷰 스킬을 확장해 깊고 다양한 관점에�
 Codex 스킬이 잘 되는지 테스트하세요.
 
 - 스킬의 트리거와 스킬의 결과가 바라는대로 동작하는지 평가하기 위한 프레임워크입니다.
+- 대상은 이름 우선순위로 찾거나 독립 스킬 경로·plugin ID로 직접 지정할 수 있습니다.
 - 자세한 것은 [`docs/skill-evaluation.md`](docs/skill-evaluation.md)를 참고하세요.
 
 ### `write-pr-content`

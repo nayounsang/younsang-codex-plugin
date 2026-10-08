@@ -18,7 +18,7 @@ const OTEL_CONFIG = [
 
 function usage() {
   console.error(
-    'Usage: node collect-skill-invocations.mjs --target-skill <name> --target-plugin-id <id> --target-scope <scope|discover> --run-id <id> --cwd <workspace> --timeout-ms <ms> --max-tokens <count> --exec-jsonl <file.jsonl> --output <file.jsonl> -- codex exec --json ...',
+    'Usage: node collect-skill-invocations.mjs --target-skill <name> --target-plugin-id <id|none> --target-scope <scope|discover> --run-id <id> --cwd <workspace> --timeout-ms <ms> --max-tokens <count> --exec-jsonl <file.jsonl> --output <file.jsonl> -- codex exec --json ...',
   );
   process.exit(2);
 }
@@ -50,8 +50,8 @@ function parseArgs(argv) {
 
   return {
     targetSkill: options.targetskill,
-    targetPluginId: options.targetpluginid,
-    resolvedTargetPluginId: options.targetpluginid,
+    targetPluginId: options.targetpluginid === 'none' ? null : options.targetpluginid,
+    resolvedTargetPluginId: options.targetpluginid === 'none' ? null : options.targetpluginid,
     targetScope: options.targetscope === 'discover' ? null : options.targetscope,
     discoverTargetScope: options.targetscope === 'discover',
     resolvedTargetScope: options.targetscope === 'discover' ? null : options.targetscope,
@@ -107,16 +107,16 @@ function collectTargetInvocations(payload, options, writeRecord) {
         const skillName = attributes['skill.name'] ?? null;
         const pluginId = attributes['skill.plugin_id'] ?? null;
         const skillScope = attributes['skill.scope'] ?? null;
-        if (skillName === options.targetSkill && !pluginId) {
+        if (skillName === options.targetSkill && options.targetPluginId !== null && !pluginId) {
           throw new Error(
             `Cannot identify skill "${options.targetSkill}" invocation: the event is missing skill.plugin_id.`,
           );
         }
         const matchesPlugin = skillName === options.targetSkill
           && pluginId === options.resolvedTargetPluginId;
-        if (matchesPlugin && (!pluginId || !skillScope)) {
+        if (matchesPlugin && !skillScope) {
           throw new Error(
-            `Cannot identify skill "${options.targetSkill}" invocation: the event is missing skill.plugin_id or skill.scope.`,
+            `Cannot identify skill "${options.targetSkill}" invocation: the event is missing skill.scope.`,
           );
         }
         const matchesScope = options.discoverTargetScope || skillScope === options.resolvedTargetScope;
@@ -378,7 +378,7 @@ try {
   await endStream(output);
   await endStream(execJsonl);
   if (options.discoverTargetScope && !options.resolvedTargetScope) {
-    collectionError ??= new Error('Target scope discovery observed no matching skill invocation. Verify the target plugin ID and run a bounded, approved preflight that invokes the target skill.');
+    collectionError ??= new Error('Target scope discovery observed no matching skill invocation. Verify the target skill identity and run a bounded, approved preflight that invokes the target skill.');
   }
   const summary = {
     run_id: options.runId,
@@ -400,7 +400,7 @@ try {
     skill_invocation_event_count: invocationCount,
     target_invocation_event_count: targetInvocationCount,
     target_invocation_observed: targetInvocationCount > 0,
-    invocation_detection: 'plugin_id_and_scope',
+    invocation_detection: 'skill_name_plugin_id_and_scope',
     collection_error: collectionError?.message ?? null,
     execution_jsonl_path: options.execJsonlPath,
     telemetry_status: rejectedRequestCount > 0
