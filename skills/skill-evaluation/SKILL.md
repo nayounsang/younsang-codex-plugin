@@ -58,6 +58,7 @@ Use the collector to run the Codex CLI, for example:
 node skills/skill-evaluation/scripts/collect-skill-invocations.mjs \
   --target-skill skill-name \
   --run-id case-01-rep-01 \
+  --cwd /path/to/fresh/workspace/case-01-rep-01 \
   --output /path/to/artifacts/case-01-rep-01/skill-invocations.jsonl \
   -- codex exec --json "<approved case prompt>"
 ```

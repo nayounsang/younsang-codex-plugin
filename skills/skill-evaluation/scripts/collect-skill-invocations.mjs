@@ -17,7 +17,7 @@ const OTEL_CONFIG = [
 
 function usage() {
   console.error(
-    'Usage: node collect-skill-invocations.mjs --target-skill <name> --run-id <id> --output <file.jsonl> -- codex exec --json ...',
+    'Usage: node collect-skill-invocations.mjs --target-skill <name> --run-id <id> --cwd <workspace> --output <file.jsonl> -- codex exec --json ...',
   );
   process.exit(2);
 }
@@ -29,7 +29,7 @@ function parseArgs(argv) {
   const options = {};
   for (let index = 0; index < separator; index += 1) {
     const key = argv[index];
-    if (!['--target-skill', '--run-id', '--output'].includes(key)) usage();
+    if (!['--target-skill', '--run-id', '--cwd', '--output'].includes(key)) usage();
     const value = argv[index + 1];
     if (!value || value.startsWith('--')) usage();
     options[key.slice(2).replaceAll('-', '')] = value;
@@ -38,7 +38,7 @@ function parseArgs(argv) {
 
   const command = argv[separator + 1];
   const commandArgs = argv.slice(separator + 2);
-  if (!options.targetskill || !options.runid || !options.output || !command) usage();
+  if (!options.targetskill || !options.runid || !options.cwd || !options.output || !command) usage();
   if (basename(command).toLowerCase().replace(/\.(cmd|exe)$/u, '') !== 'codex') {
     console.error('The command after -- must be the Codex CLI executable.');
     process.exit(2);
@@ -47,6 +47,7 @@ function parseArgs(argv) {
   return {
     targetSkill: options.targetskill,
     runId: options.runid,
+    cwd: resolve(options.cwd),
     outputPath: resolve(options.output),
     command,
     commandArgs,
@@ -225,6 +226,7 @@ try {
   child = spawn(options.command, [...configArgs, ...options.commandArgs], {
     stdio: 'inherit',
     env: process.env,
+    cwd: options.cwd,
   });
 
   const childExit = await new Promise((resolveExit, rejectSpawn) => {
