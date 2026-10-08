@@ -91,6 +91,13 @@ Codex의 기존 빌트인 리뷰 스킬을 확장해 깊고 다양한 관점에�
 - 실행 가능한 수정 방향을 출력합니다.
 - 자세한 것은 [`docs/dev-docs-review.md`](docs/dev-docs-review.md)를 참고하세요.
 
+### `skill-evaluation`
+
+Codex 스킬이 잘 되는지 테스트하세요.
+
+- 스킬의 트리거와 스킬의 결과가 바라는대로 동작하는지 평가하기 위한 프레임워크입니다.
+- 자세한 것은 [`docs/skill-evaluation.md`](docs/skill-evaluation.md)를 참고하세요.
+
 ### `write-pr-content`
 
 좋은 PR의 사례가 될 수 있는 Markdown fragment를 제공합니다.
