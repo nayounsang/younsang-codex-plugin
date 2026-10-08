@@ -4,7 +4,7 @@ Use these fields to prepare human-reviewable case sets. The JSON is this skill's
 
 ## Trigger set
 
-Keep explicit invocation and automatic routing in separate cases. `expected_action` is one of `invoke_target`, `do_not_invoke`, or `invoke_other`; for `invoke_other`, name the expected skill. A case is not approved until the user confirms its expected action.
+Keep explicit invocation and automatic routing in separate cases. `expected_action` is one of `invoke_target` or `do_not_invoke`. A case is not approved until the user confirms its expected action.
 
 ```json
 {
@@ -16,7 +16,6 @@ Keep explicit invocation and automatic routing in separate cases. `expected_acti
       "mode": "automatic",
       "prompt": "A realistic request that should select the target skill",
       "expected_action": "invoke_target",
-      "expected_skill": "skill-name",
       "case_type": "positive",
       "reason": "Matches the skill's stated trigger",
       "boundary_pair_id": "pair-01",
@@ -28,7 +27,7 @@ Keep explicit invocation and automatic routing in separate cases. `expected_acti
 }
 ```
 
-Useful `case_type` values include `positive`, `hard_negative`, `minimal_pair`, `mixed_context`, `incomplete_input`, `cross_skill`, and `explicit_invocation`. Record `basis` as `stated in skill`, `confirmed by user`, or `inferred`. Do not score `approved: false` cases.
+Useful `case_type` values include `positive`, `hard_negative`, `minimal_pair`, `mixed_context`, `incomplete_input`, and `explicit_invocation`. Record `basis` as `stated in skill`, `confirmed by user`, or `inferred`. Do not score `approved: false` cases.
 
 ## Task quality set
 
@@ -87,9 +86,7 @@ For semantic checks, replace `rubric: null` with a user-approved rubric containi
 | Case | Mode | Expected | Observed from local telemetry | Result | Evidence |
 | ... |
 
-For automatic-routing cases, count only target-skill invocation: `invoke_target` is positive; `do_not_invoke` and `invoke_other` are negative. An observed target invocation on a positive case is TP; no target invocation is FN. An observed target invocation on a negative case is FP; no target invocation is TN. Report counts only for approved, verified cases. Keep explicit-invocation cases outside these counts. Record which other skill, if any, was selected as per-case evidence; it does not change this target-specific classification.
-
-Cross-skill routing: <per-case result>.
+For automatic-routing cases, count only target-skill invocation: `invoke_target` is positive and `do_not_invoke` is negative. An observed target invocation on a positive case is TP; no target invocation is FN. An observed target invocation on a negative case is FP; no target invocation is TN. Report counts only for approved, verified cases. Keep explicit-invocation cases outside these counts. Other skill selections are outside the evaluation criteria.
 
 ## Task quality results
 | Case | Condition | With target skill | Baseline | Evidence |
@@ -98,7 +95,7 @@ Cross-skill routing: <per-case result>.
 ## Comparison and variability
 <Per-case differences, repetitions, timing, token/tool use, and limits.>
 
-## Unverified, failed, or skipped
+## Errors, failed, or skipped
 <Case, reason, and effect on interpretation.>
 ```
 

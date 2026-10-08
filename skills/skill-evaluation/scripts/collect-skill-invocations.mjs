@@ -18,7 +18,7 @@ const OTEL_CONFIG = [
 
 function usage() {
   console.error(
-    'Usage: node collect-skill-invocations.mjs --target-skill <name> --run-id <id> --cwd <workspace> --timeout-ms <ms> --max-tokens <count> --exec-jsonl <file.jsonl> --output <file.jsonl> -- codex exec --json ...',
+    'Usage: node collect-skill-invocations.mjs --target-skill <name> --target-plugin-id <id> --target-scope <scope|discover> --run-id <id> --cwd <workspace> --timeout-ms <ms> --max-tokens <count> --exec-jsonl <file.jsonl> --output <file.jsonl> -- codex exec --json ...',
   );
   process.exit(2);
 }
@@ -30,7 +30,7 @@ function parseArgs(argv) {
   const options = {};
   for (let index = 0; index < separator; index += 1) {
     const key = argv[index];
-    if (!['--target-skill', '--run-id', '--cwd', '--timeout-ms', '--max-tokens', '--exec-jsonl', '--output'].includes(key)) usage();
+    if (!['--target-skill', '--target-plugin-id', '--target-scope', '--run-id', '--cwd', '--timeout-ms', '--max-tokens', '--exec-jsonl', '--output'].includes(key)) usage();
     const value = argv[index + 1];
     if (!value || value.startsWith('--')) usage();
     options[key.slice(2).replaceAll('-', '')] = value;
@@ -39,7 +39,7 @@ function parseArgs(argv) {
 
   const command = argv[separator + 1];
   const commandArgs = argv.slice(separator + 2);
-  if (!options.targetskill || !options.runid || !options.cwd || !options.timeoutms || !options.maxtokens || !options.execjsonl || !options.output || !command) usage();
+  if (!options.targetskill || !options.targetpluginid || !options.targetscope || !options.runid || !options.cwd || !options.timeoutms || !options.maxtokens || !options.execjsonl || !options.output || !command) usage();
   const timeoutMs = Number(options.timeoutms);
   const maxTokens = Number(options.maxtokens);
   if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 2_147_483_647 || !Number.isSafeInteger(maxTokens) || maxTokens < 1) usage();
@@ -50,6 +50,11 @@ function parseArgs(argv) {
 
   return {
     targetSkill: options.targetskill,
+    targetPluginId: options.targetpluginid,
+    resolvedTargetPluginId: options.targetpluginid,
+    targetScope: options.targetscope === 'discover' ? null : options.targetscope,
+    discoverTargetScope: options.targetscope === 'discover',
+    resolvedTargetScope: options.targetscope === 'discover' ? null : options.targetscope,
     runId: options.runid,
     cwd: resolve(options.cwd),
     timeoutMs,
@@ -87,7 +92,7 @@ function eventName(record, attributes) {
   return record.eventName ?? attributes['event.name'] ?? anyValue(record.body);
 }
 
-function collectTargetInvocations(payload, targetSkill, runId, writeRecord) {
+function collectTargetInvocations(payload, options, writeRecord) {
   let recordCount = 0;
   let skillInvocationCount = 0;
   let targetInvocationCount = 0;
@@ -99,16 +104,44 @@ function collectTargetInvocations(payload, targetSkill, runId, writeRecord) {
         const attributes = attributesToObject(record.attributes);
         if (eventName(record, attributes) !== 'codex.skill_invocation') continue;
 
+        const skillName = attributes['skill.name'] ?? null;
+        const pluginId = attributes['skill.plugin_id'] ?? null;
+        const skillScope = attributes['skill.scope'] ?? null;
+        if (skillName === options.targetSkill && !pluginId) {
+          throw new Error(
+            `Cannot identify skill "${options.targetSkill}" invocation: the event is missing skill.plugin_id.`,
+          );
+        }
+        const matchesPlugin = skillName === options.targetSkill
+          && pluginId === options.resolvedTargetPluginId;
+        if (matchesPlugin && (!pluginId || !skillScope)) {
+          throw new Error(
+            `Cannot identify skill "${options.targetSkill}" invocation: the event is missing skill.plugin_id or skill.scope.`,
+          );
+        }
+        const matchesScope = options.discoverTargetScope || skillScope === options.resolvedTargetScope;
+        if (matchesPlugin && matchesScope && options.discoverTargetScope) {
+          if (options.resolvedTargetScope && options.resolvedTargetScope !== skillScope) {
+            throw new Error(
+              `Cannot identify skill "${options.targetSkill}" invocation: multiple scopes were observed during scope discovery.`,
+            );
+          }
+          options.resolvedTargetScope = skillScope;
+        }
+        const isTargetSkill = skillName === options.targetSkill
+          && pluginId === options.resolvedTargetPluginId
+          && skillScope === options.resolvedTargetScope;
+
         const saved = {
-          run_id: runId,
+          run_id: options.runId,
           event: 'codex.skill_invocation',
-          skill: attributes['skill.name'] ?? null,
-          is_target_skill: attributes['skill.name'] === targetSkill,
+          skill: skillName,
+          is_target_skill: isTargetSkill,
           invocation_type: attributes['skill.invocation_type'] ?? null,
           conversation_id: attributes['conversation.id'] ?? null,
           turn_id: attributes['turn.id'] ?? null,
-          skill_scope: attributes['skill.scope'] ?? null,
-          plugin_id: attributes['skill.plugin_id'] ?? null,
+          skill_scope: skillScope,
+          plugin_id: pluginId,
           time_unix_nano: record.timeUnixNano ?? null,
           observed_time_unix_nano: record.observedTimeUnixNano ?? null,
         };
@@ -187,7 +220,7 @@ const server = createServer((request, response) => {
       }
 
       requestCount += 1;
-      const counts = collectTargetInvocations(payload, options.targetSkill, options.runId, (record) => {
+      const counts = collectTargetInvocations(payload, options, (record) => {
         output.write(`${JSON.stringify(record)}\n`);
       });
       receivedRecordCount += counts.recordCount;
@@ -197,6 +230,10 @@ const server = createServer((request, response) => {
     } catch (error) {
       rejectedRequestCount += 1;
       console.error(`Rejected OTLP logs payload: ${error.message}`);
+      if (error.message.startsWith('Cannot identify skill')) {
+        collectionError = error;
+        requestBudgetStop('target_identity_unresolved');
+      }
       response.writeHead(400, { 'content-type': 'application/json' }).end('{}');
     }
   });
@@ -216,18 +253,54 @@ function endStream(stream) {
 let child;
 let interrupted = false;
 let budgetStopReason;
+let collectionError;
 let tokenUsage = 0;
 let tokenUsageEventCount = 0;
 let outputBuffer = '';
 const stdoutDecoder = new StringDecoder('utf8');
 let forceKillTimer;
+let forceKillPromise;
 let timeoutTimer;
+function signalRun(signal) {
+  if (!child) return;
+  try {
+    if (process.platform === 'win32' || !child.pid) {
+      if (child.exitCode === null) child.kill(signal);
+    }
+    else process.kill(-child.pid, signal);
+  } catch (error) {
+    if (error.code !== 'ESRCH') throw error;
+  }
+}
+async function waitForRunProcessGroupExit() {
+  if (process.platform === 'win32' || !child) return;
+  const deadline = Date.now() + 5_000;
+  while (Date.now() < deadline) {
+    try {
+      process.kill(-child.pid, 0);
+      await new Promise((resolveWait) => setTimeout(resolveWait, 50));
+    } catch (error) {
+      if (error.code === 'ESRCH') return;
+      throw error;
+    }
+  }
+  collectionError ??= new Error('The evaluated run process group remained active after SIGKILL.');
+}
 function requestBudgetStop(reason) {
   if (budgetStopReason || !child || child.exitCode !== null) return;
   budgetStopReason = reason;
-  child.kill('SIGTERM');
-  forceKillTimer = setTimeout(() => child.kill('SIGKILL'), 2_000);
-  forceKillTimer.unref();
+  signalRun('SIGTERM');
+  forceKillPromise = new Promise((resolveStop) => {
+    forceKillTimer = setTimeout(async () => {
+      signalRun('SIGKILL');
+      try {
+        await waitForRunProcessGroupExit();
+      } catch (error) {
+        collectionError ??= error;
+      }
+      resolveStop();
+    }, 2_000);
+  });
 }
 function observeExecutionLine(line) {
   try {
@@ -250,7 +323,7 @@ function observeExecutionLine(line) {
 for (const signal of ['SIGINT', 'SIGTERM']) {
   process.once(signal, () => {
     interrupted = true;
-    child?.kill(signal);
+    requestBudgetStop('interrupted');
   });
 }
 
@@ -272,6 +345,7 @@ try {
     stdio: ['inherit', 'pipe', 'inherit'],
     env: process.env,
     cwd: options.cwd,
+    detached: process.platform !== 'win32',
   });
   child.stdout.on('data', (chunk) => {
     if (!execJsonl.write(chunk)) {
@@ -289,22 +363,28 @@ try {
   });
 
   timeoutTimer = setTimeout(() => requestBudgetStop('timeout'), options.timeoutMs);
+  if (interrupted) requestBudgetStop('interrupted');
 
   const childExit = await new Promise((resolveExit, rejectSpawn) => {
     child.once('error', rejectSpawn);
     child.once('close', (code, signal) => resolveExit({ code, signal }));
   });
   clearTimeout(timeoutTimer);
-  clearTimeout(forceKillTimer);
+  if (forceKillPromise) await forceKillPromise;
   outputBuffer += stdoutDecoder.end();
   if (outputBuffer.trim()) observeExecutionLine(outputBuffer);
 
   await closeServer();
   await endStream(output);
   await endStream(execJsonl);
+  if (options.discoverTargetScope && !options.resolvedTargetScope) {
+    collectionError ??= new Error('Target scope discovery observed no matching skill invocation. Verify the target plugin ID and run a bounded, approved preflight that invokes the target skill.');
+  }
   const summary = {
     run_id: options.runId,
     target_skill: options.targetSkill,
+    target_plugin_id: options.resolvedTargetPluginId,
+    target_scope: options.resolvedTargetScope,
     codex_exit_code: childExit.code,
     codex_signal: childExit.signal,
     elapsed_ms: Date.now() - startedAt,
@@ -320,13 +400,14 @@ try {
     skill_invocation_event_count: invocationCount,
     target_invocation_event_count: targetInvocationCount,
     target_invocation_observed: targetInvocationCount > 0,
-    invocation_detection: 'best_effort',
+    invocation_detection: 'plugin_id_and_scope',
+    collection_error: collectionError?.message ?? null,
     execution_jsonl_path: options.execJsonlPath,
     telemetry_status: rejectedRequestCount > 0
       ? 'invalid_payload'
       : receivedRecordCount > 0
         ? 'received'
-        : 'unverified',
+        : 'no_records',
     interrupted,
   };
   await new Promise((resolveWrite, rejectWrite) => {
@@ -335,8 +416,12 @@ try {
   });
 
   if (outputError) throw outputError;
-  if (budgetStopReason) process.exitCode = budgetStopReason === 'timeout' ? 124 : 125;
-  else if (childExit.code !== 0 || interrupted) process.exitCode = childExit.code ?? 1;
+  if (collectionError) process.exitCode = 1;
+  else if (budgetStopReason) {
+    process.exitCode = budgetStopReason === 'timeout' ? 124
+      : budgetStopReason === 'interrupted' ? (process.platform === 'win32' ? 1 : 130)
+        : 125;
+  } else if (childExit.code !== 0 || interrupted) process.exitCode = interrupted ? 130 : childExit.code ?? 1;
 } catch (error) {
   clearTimeout(timeoutTimer);
   clearTimeout(forceKillTimer);
