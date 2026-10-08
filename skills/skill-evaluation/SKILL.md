@@ -52,10 +52,10 @@ Include each criterion's basis, complete case prompts and expected routing/outco
 
 Before presenting the plan, confirm that Codex CLI, Node.js, and a writable artifact path are available. The bundled [local telemetry collector](scripts/collect-skill-invocations.mjs) starts a loopback-only OTLP/HTTP JSON server for each Codex run, passes its endpoint through per-process `codex -c` overrides, and stores only `codex.skill_invocation` records plus a summary. It does not require an npm package or a user-wide Codex telemetry configuration. It disables trace and metrics exporters for the child process. Other OTLP log records are parsed in memory and discarded.
 
-Use the collector to run the Codex CLI, for example:
+Resolve the collector's absolute path from this skill's installed directory before running it. The `--cwd` option changes only the Codex child process directory; it does not change where Node.js looks for the collector script. For example:
 
 ```sh
-node skills/skill-evaluation/scripts/collect-skill-invocations.mjs \
+node /absolute/path/to/skill-evaluation/scripts/collect-skill-invocations.mjs \
   --target-skill skill-name \
   --run-id case-01-rep-01 \
   --cwd /path/to/fresh/workspace/case-01-rep-01 \
