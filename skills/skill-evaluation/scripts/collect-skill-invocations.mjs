@@ -260,6 +260,8 @@ try {
     rejected_request_count: rejectedRequestCount,
     skill_invocation_event_count: invocationCount,
     target_invocation_event_count: targetInvocationCount,
+    target_invocation_observed: targetInvocationCount > 0,
+    invocation_detection: 'best_effort',
     execution_jsonl_path: options.execJsonlPath,
     telemetry_status: rejectedRequestCount > 0
       ? 'invalid_payload'
