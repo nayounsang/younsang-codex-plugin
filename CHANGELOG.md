@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/nayounsang/younsang-codex-plugin/compare/v0.2.0...v0.3.0) (2026-10-09)
+
+
+### Features
+
+* manage skill-evaluation test cases ([#35](https://github.com/nayounsang/younsang-codex-plugin/issues/35)) ([0bd9dcf](https://github.com/nayounsang/younsang-codex-plugin/commit/0bd9dcf49325f9ec39f8a16f461549cc6e6d9b9e))
+
 ## [0.2.0](https://github.com/nayounsang/younsang-codex-plugin/compare/v0.1.2...v0.2.0) (2026-10-08)
 
 
