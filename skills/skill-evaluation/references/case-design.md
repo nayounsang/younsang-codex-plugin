@@ -1,74 +1,27 @@
 # Case Design and Result Format
 
-Use these fields to prepare human-reviewable case sets. The JSON is this skill's design format; convert approved cases to the execution format only if the selected runner requires it.
+Write human-reviewable test cases as one sentence in the evaluation plan. Use `When` and `Then`, with an optional `Who`. Include `Who` only when a specific user or persona is relevant to the case; omit generic actors such as “user” or “developer.” Codex supplies the concrete request in `When`, and the sentence states the expected observable behavior in `Then`. Include the relevant basis or verification detail in the sentence when it helps explain the expectation. Do not split a case into separate prompt, expected-result, criterion, or verification fields.
 
 ## Trigger set
 
-Keep explicit invocation and automatic routing in separate cases. `expected_action` is one of `invoke_target` or `do_not_invoke`. A case is not approved until the user confirms its expected action.
+Keep explicit invocation and automatic routing in separate cases. The `When` clause should contain the complete request Codex will submit. `Then` must unambiguously say that Codex invokes or does not invoke the target skill; derive `invoke_target` or `do_not_invoke` from this wording when reporting results. A case is not approved until the user confirms its expected behavior.
 
-```json
-{
-  "schema_version": 1,
-  "target_skill": "skill-name",
-  "cases": [
-    {
-      "id": "auto-positive-01",
-      "mode": "automatic",
-      "prompt": "A realistic request that should select the target skill",
-      "expected_action": "invoke_target",
-      "case_type": "positive",
-      "reason": "Matches the skill's stated trigger",
-      "boundary_pair_id": "pair-01",
-      "basis": "stated in skill",
-      "approved": false,
-      "evidence_method": "local OTLP collector records codex.skill_invocation"
-    }
-  ]
-}
+Example:
+
+```markdown
+- “API 응답 시나리오를 바꿔 화면 동작을 확인해 주세요”라고 요청하면 Codex는 `api-scenario-forge`를 호출합니다.
+- “api-scenario-forge 스킬을 평가해 주세요”라고 명시적으로 요청하면 Codex는 해당 스킬을 실행하며, 이 결과는 자동 선택 결과와 별도로 기록합니다.
 ```
-
-Useful `case_type` values include `positive`, `hard_negative`, `minimal_pair`, `mixed_context`, `incomplete_input`, and `explicit_invocation`. Record `basis` as `stated in skill`, `confirmed by user`, or `inferred`. Do not score `approved: false` cases.
 
 ## Task quality set
 
-Each success condition should express one observable fact. Keep expected and prohibited outcomes explicit, and make the verification method reproducible.
+Use one sentence per task case. State the request in `When` and express the expected task outcome in `Then`. Include fixture or initial-state details in the sentence when they define the case. Keep expectations observable and disputed expectations unresolved until the user decides.
 
-```json
-{
-  "schema_version": 1,
-  "target_skill": "skill-name",
-  "cases": [
-    {
-      "id": "task-happy-01",
-      "prompt": "A realistic task request",
-      "fixtures": ["fixtures/input.txt"],
-      "initial_state": "A fresh workspace containing only the listed fixture",
-      "success_conditions": [
-        {
-          "id": "output-exists",
-          "condition": "The requested output file exists at the specified path",
-          "verification": "Check the isolated workspace filesystem",
-          "basis": "stated in skill",
-          "approved": false
-        }
-      ],
-      "prohibited_outcomes": [
-        {
-          "condition": "No file outside the isolated workspace is changed",
-          "verification": "Compare the source workspace before and after",
-          "basis": "confirmed by user",
-          "approved": false
-        }
-      ],
-      "rubric": null,
-      "case_type": "happy_path",
-      "side_effects": "none"
-    }
-  ]
-}
+```markdown
+- “격리된 테스트 앱에서 상세 API를 `404`로 설정하고 페이지를 열어 주세요”라고 요청하면, 페이지에 ‘찾을 수 없음’ 화면이 나타나고 캡처로 확인됩니다.
 ```
 
-For semantic checks, replace `rubric: null` with a user-approved rubric containing observable anchors for pass, partial, and fail. Do not invent a rubric after seeing outputs. Use unique case and assertion IDs. Keep fixture references inside the evaluation fixture directory.
+If a semantic outcome cannot be judged from the sentence alone, explain the unresolved interpretation to the user before approval; do not invent a rubric after seeing outputs. Use the approved case sentences to identify results in the report. Keep fixture references inside the evaluation fixture directory.
 
 ## Report format
 
@@ -83,13 +36,13 @@ For semantic checks, replace `rubric: null` with a user-approved rubric containi
 - Artifacts: <verified paths>
 
 ## Trigger results
-| Case | Mode | Expected | Observed from local telemetry | Result | Evidence |
+| Case sentence | Mode | Expected | Observed from local telemetry | Result | Evidence |
 | ... |
 
 For automatic-routing cases, count only target-skill invocation: `invoke_target` is positive and `do_not_invoke` is negative. An observed target invocation on a positive case is TP; no target invocation is FN. An observed target invocation on a negative case is FP; no target invocation is TN. Report counts only for approved, verified cases. Keep explicit-invocation cases outside these counts. Other skill selections are outside the evaluation criteria.
 
 ## Task quality results
-| Case | Condition | With target skill | Baseline | Evidence |
+| Case sentence | Outcome | With target skill | Baseline | Evidence |
 | ... |
 
 ## Comparison and variability
@@ -99,4 +52,4 @@ For automatic-routing cases, count only target-skill invocation: `invoke_target`
 <Case, reason, and effect on interpretation.>
 ```
 
-Use `not applicable` rather than fabricate counts when a case category was not tested. Report task results as per-case outcomes and deltas; do not collapse them with trigger counts into an overall score. Include rates only with numerator, denominator, and the approved verified case IDs.
+Use `not applicable` rather than fabricate counts when a case category was not tested. Report task results as per-case outcomes and deltas; do not collapse them with trigger counts into an overall score. Include rates only with numerator, denominator, and the approved verified case sentences.
