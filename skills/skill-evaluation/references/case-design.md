@@ -9,8 +9,7 @@ Keep explicit invocation and automatic routing in separate cases. The `When` cla
 Example:
 
 ```markdown
-- “API 응답 시나리오를 바꿔 화면 동작을 확인해 주세요”라고 요청하면 Codex는 `api-scenario-forge`를 호출합니다.
-- “api-scenario-forge 스킬을 평가해 주세요”라고 명시적으로 요청하면 Codex는 해당 스킬을 실행하며, 이 결과는 자동 선택 결과와 별도로 기록합니다.
+- When `$younsang-codex-plugin:api-scenario-forge` is explicitly invoked, Codex invokes `api-scenario-forge`; record this separately from automatic-routing results.
 ```
 
 ## Task quality set

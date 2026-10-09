@@ -1,11 +1,15 @@
 ---
 name: skill-evaluation
-description: Evaluate a Codex skill's routing accuracy and task quality with a human-approved, isolated evaluation workflow. Use when asked to evaluate, benchmark, or test whether a skill triggers for the right requests and improves task results, including with-versus-without-skill comparisons. Do not use for a static documentation review alone, or when the user only asks to write or edit a skill.
+description: Evaluate a Codex skill's routing accuracy and task quality with a human-approved, isolated workflow. Run only when the user explicitly invokes $younsang-codex-plugin:skill-evaluation; do not start from an implicit request to evaluate a skill.
 ---
 
 # Skill Evaluation
 
 Evaluate the target skill's trigger behavior and task outcomes as separate dimensions. The user approves the success criteria and cases before any model evaluation runs. Report evidence and unknowns; never infer a trigger from the answer text or combine the dimensions into one score.
+
+## Invocation
+
+Run this workflow only when the user explicitly invokes `$younsang-codex-plugin:skill-evaluation`. Do not start it from a natural-language request to evaluate a skill alone.
 
 ## Boundaries
 
@@ -52,7 +56,7 @@ Look for an existing plan in the target skill directory first, then in the `skil
 
 Create two distinct case sets following [case design](references/case-design.md):
 
-1. **Trigger cases** test only whether Codex invokes the target skill. In each case sentence, make the `Then` clause unambiguously state that Codex invokes or does not invoke the target; derive `invoke_target` or `do_not_invoke` from that clause when recording results. Separate explicit `$skill-name` invocation from ordinary natural-language routing. Include positive examples, hard negatives, minimal pairs, mixed-context requests, and incomplete input where relevant. Do not require or score which other skill Codex selects.
+1. **Trigger cases** test only whether Codex invokes the target skill. In each case sentence, make the `Then` clause unambiguously state that Codex invokes or does not invoke the target; derive `invoke_target` or `do_not_invoke` from that clause when recording results. Separate explicit invocation using the target's available name (including a plugin-qualified name when needed) from ordinary natural-language routing. Include positive examples, hard negatives, minimal pairs, mixed-context requests, and incomplete input where relevant. Do not require or score which other skill Codex selects.
 2. **Task cases** test observable outcomes with atomic pass conditions, prohibited outcomes, fixtures/initial state, and a verification method. Cover normal use and relevant edge, missing-input, recovery, and safety behavior.
 
 Format the proposed plan as Markdown:

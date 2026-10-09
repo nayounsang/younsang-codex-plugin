@@ -6,16 +6,16 @@
 
 ```text
 # 이름만 입력
-$skill-evaluation api-scenario-forge
+$younsang-codex-plugin:skill-evaluation api-scenario-forge
 
 # 레포지토리 스킬
-$skill-evaluation /path/to/project/.agents/skills/api-scenario-forge
+$younsang-codex-plugin:skill-evaluation /path/to/project/.agents/skills/api-scenario-forge
 
 # user 스킬
-$skill-evaluation ~/.agents/skills/api-scenario-forge
+$younsang-codex-plugin:skill-evaluation ~/.agents/skills/api-scenario-forge
 
 # plugin 스킬
-$skill-evaluation api-scenario-forge --plugin-id younsang-codex-plugin@younsang-codex-plugins
+$younsang-codex-plugin:skill-evaluation api-scenario-forge --plugin-id younsang-codex-plugin@younsang-codex-plugins
 ```
 
 - Codex는 평가 계획을 제안합니다. 이 단계에서는 평가를 실행하지 않고 피드백을 주고 받습니다.
