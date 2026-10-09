@@ -1,11 +1,15 @@
 ---
 name: skill-evaluation
-description: Evaluate a Codex skill's routing accuracy and task quality with a human-approved, isolated evaluation workflow. Use when asked to evaluate, benchmark, or test whether a skill triggers for the right requests and improves task results, including with-versus-without-skill comparisons. Do not use for a static documentation review alone, or when the user only asks to write or edit a skill.
+description: Evaluate a Codex skill's routing accuracy and task quality with a human-approved, isolated workflow. Run only when the user explicitly invokes $younsang-codex-plugin:skill-evaluation; do not start from an implicit request to evaluate a skill.
 ---
 
 # Skill Evaluation
 
 Evaluate the target skill's trigger behavior and task outcomes as separate dimensions. The user approves the success criteria and cases before any model evaluation runs. Report evidence and unknowns; never infer a trigger from the answer text or combine the dimensions into one score.
+
+## Invocation
+
+Run this workflow only when the user explicitly invokes `$younsang-codex-plugin:skill-evaluation`. Do not start it from a natural-language request to evaluate a skill alone.
 
 ## Boundaries
 
@@ -37,22 +41,33 @@ Extract the target's:
 - output contract and evidence requirements;
 - failure and recovery behavior.
 
-For each proposed criterion, label its basis `stated in skill`, `confirmed by user`, or `inferred`. Inferred criteria are proposals, never approved answer keys.
+For each proposed criterion, identify its basis as `stated in skill`, `confirmed by user`, or `inferred` within the case sentence where relevant. Inferred criteria are proposals, never approved answer keys.
 
 ### 2. Draft the evaluation plan and get approval
 
+Persist the plan as `evaluation-plan.md`, without adding plan versioning. Build the target skill identifier as `<scope>-<plugin-id>-<skill-name>` using the resolved target identity; use `none` as the plugin ID for a standalone skill. For this repository's plugin, the plugin ID is `younsang-codex-plugin@younsang-codex-plugins`.
+
+Use these paths in order:
+
+1. Under the target skill directory, use `<target-skill-directory>/<target-skill-identifier>/evaluation-plan.md`.
+2. If the target skill directory cannot be used, use `<skill-evaluation-directory>/plans/<target-skill-identifier>/evaluation-plan.md`.
+
+Look for an existing plan in the target skill directory first, then in the `skill-evaluation` fallback directory. Treat any failure to read a candidate as unavailable; there is no need to distinguish a missing file from a permission error. Skip a readable plan if it cannot be updated there. If neither location has a usable existing plan, create a new plan at the first location that can save it, in the same priority order. If neither location can save a plan, start a new plan in the conversation and disclose that it cannot be persisted. Always update the same selected file; do not save an update to a lower-priority location while a higher-priority readable and writable plan would take precedence on the next lookup. Do not create parallel copies or backups.
+
 Create two distinct case sets following [case design](references/case-design.md):
 
-1. **Trigger cases** test only whether Codex invokes the target skill. Each automatic case expects either `invoke_target` or `do_not_invoke`. Separate explicit `$skill-name` invocation from ordinary natural-language routing. Include positive examples, hard negatives, minimal pairs, mixed-context requests, and incomplete input where relevant. Do not require or score which other skill Codex selects.
+1. **Trigger cases** test only whether Codex invokes the target skill. In each case sentence, make the `Then` clause unambiguously state that Codex invokes or does not invoke the target; derive `invoke_target` or `do_not_invoke` from that clause when recording results. Separate explicit invocation using the target's available name (including a plugin-qualified name when needed) from ordinary natural-language routing. Include positive examples, hard negatives, minimal pairs, mixed-context requests, and incomplete input where relevant. Do not require or score which other skill Codex selects.
 2. **Task cases** test observable outcomes with atomic pass conditions, prohibited outcomes, fixtures/initial state, and a verification method. Cover normal use and relevant edge, missing-input, recovery, and safety behavior.
 
 Format the proposed plan as Markdown:
 
 - Use `# <skill-name>` as the title.
-- Include a test-cases section with subsections for automatic selection, requests that should not trigger, and task outcomes. Follow it with an evaluation-method section and subsections for comparison conditions, execution conditions, repetitions and limits, and files and cleanup. Use `-` list items under each subsection.
+- Include a test-cases section with subsections for automatic selection, requests that should not trigger, and task outcomes. Write each case as one natural, idiomatic sentence in the user's language. The sentence conveys `When` and `Then`, with an optional `Who`; these are concepts, not literal labels to print. Include `Who` only when a specific user or persona is relevant to the case; omit generic actors such as “user” or “developer.” Codex writes the concrete request in `When`; `Then` states the expected observable behavior and includes the relevant basis or verification detail in natural wording when needed. Do not require separate prompt, expected-result, criterion, or verification fields for each case. Follow the test-cases section with an evaluation-method section and subsections for comparison conditions, execution conditions, repetitions and limits, and files and cleanup. Use `-` list items under each subsection.
 - Write the entire proposed plan in the user's language.
 
-Include each criterion's basis, complete case prompts and expected routing/outcomes, model and permission conditions, repetitions, concrete budget/time limits, a persistent artifact location separate from disposable run workspaces, cleanup plan, and side effects in the relevant lists. Identify the active model provider, exact endpoint/base URL, and model ID, and state which case prompts, fixture/source files, and tool outputs may be sent to that provider. Do not copy or transmit credentials or unrelated user data. If the provider, endpoint, or data scope cannot be determined, say so and do not run until the user resolves it. Do not make the user prepare Codex itself. Keep disputed expectations unresolved and exclude them from scoring. After any correction request, show the revised final plan and wait for explicit approval; feedback alone is not approval. Do not execute any evaluation case before approval.
+Include the complete request and expected behavior in each case sentence. Keep disputed expectations unresolved and exclude them from scoring. Also include model and permission conditions, repetitions, concrete budget/time limits, a persistent artifact location separate from disposable run workspaces, cleanup plan, and side effects in the relevant evaluation-method lists. Identify the active model provider, exact endpoint/base URL, and model ID, and state which case prompts, fixture/source files, and tool outputs may be sent to that provider. Do not copy or transmit credentials or unrelated user data. If the provider, endpoint, or data scope cannot be determined, say so and do not run until the user resolves it. Do not make the user prepare Codex itself. After any correction request, save and show the revised plan, then wait for explicit approval; feedback alone is not approval. Do not execute any evaluation case before approval.
+
+Show the loaded or newly created plan and let the user choose to execute it or request changes. On a change request, update the same plan file, show the revised plan, and ask again. Start evaluation only after the user explicitly chooses execution; a request to revise or feedback on the plan is not approval to run.
 
 Treat the approved time limit as a cumulative deadline for Codex child execution across the run set. Before each collector invocation, pass the remaining milliseconds using `--timeout-ms`. On POSIX systems, the collector sends `SIGTERM` to the run's process group at expiry and `SIGKILL` after a two-second grace period. It uses the same bounded stop path for `SIGINT` and `SIGTERM`, and exits nonzero when interrupted. On Windows, it signals only the Codex child; descendant termination is not guaranteed. Do not run cases that can leave workspace-changing tools active on Windows unless the process-tree limitation is resolved. State that collector cleanup may extend elapsed wall-clock time. Pass the remaining token threshold using `--max-tokens` and subtract the reported usage after each run. Codex reports usage at completed-turn boundaries, so the final turn may exceed the threshold; state this possible overrun in the plan. If a run does not report token usage, stop the run set and report an error rather than starting more cases.
 

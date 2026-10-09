@@ -1,0 +1,7 @@
+interface:
+  display_name: Skill Evaluation
+  short_description: Evaluate skills with approved test plans
+policy:
+  products:
+    - CODEX
+  allow_implicit_invocation: false

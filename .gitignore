@@ -4,3 +4,5 @@ __pycache__/
 .venv/
 dist/
 build/
+evaluation-plan.md
+/complex-prompt/
